@@ -789,7 +789,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     });
 
     if (this.hasBeenKilled) {
-      logger.info('Send SIGKILL to ffmpeg');
+      logger.verbose('Send SIGKILL to ffmpeg');
       this.ffmpeg.kill('SIGKILL');
       return;
     }
@@ -797,7 +797,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     this.ffmpegName = 'Stream FFMPEG';
 
     this.ffmpeg.on('error', (code, signal) => {
-      logger.info(
+      logger.debug(
         `${this.ffmpegName} received error event: ${code}, ${signal}`,
       );
     });
@@ -805,21 +805,21 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     this.ffmpeg.on('exit', (code: number, signal) => {
       if (code === null) {
         if (!this.hasBeenKilled) {
-          logger.info(`${this.ffmpegName} exited due to signal: ${signal}`, {
+          logger.debug(`${this.ffmpegName} exited due to signal: ${signal}`, {
             cmd: `${this.opts.ffmpegExecutablePath} ${ffmpegArgs.join(' ')}`,
           });
         } else {
-          logger.info(
+          logger.debug(
             `${this.ffmpegName} exited due to signal: ${signal} as expected.`,
           );
         }
         this.emit('close', code);
       } else if (code === 0) {
-        logger.info(`${this.ffmpegName} exited normally.`);
+        logger.debug(`${this.ffmpegName} exited normally.`);
         this.emit('end');
       } else if (code === 255) {
         if (this.hasBeenKilled) {
-          logger.info(`${this.ffmpegName} finished with code 255.`);
+          logger.debug(`${this.ffmpegName} finished with code 255.`);
           this.emit('close', code);
           return;
         }
@@ -829,10 +829,10 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
             cmd: `${this.opts.ffmpegExecutablePath} ${ffmpegArgs.join(' ')}`,
           });
         }
-        logger.info(`${this.ffmpegName} exited with code 255.`);
+        logger.debug(`${this.ffmpegName} exited with code 255.`);
         this.emit('close', code);
       } else {
-        logger.info(`${this.ffmpegName} exited with code ${code}.`);
+        logger.debug(`${this.ffmpegName} exited with code ${code}.`);
         this.emit('error', {
           code: code,
           cmd: `${this.opts.ffmpegExecutablePath} ${ffmpegArgs.join(' ')}`,
@@ -910,7 +910,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     logger.info(`${this.ffmpegName} RECEIVED kill() command`);
     this.hasBeenKilled = true;
     if (typeof this.ffmpeg != 'undefined') {
-      logger.info(`${this.ffmpegName} this.ffmpeg.kill()`);
+      logger.debug(`${this.ffmpegName} this.ffmpeg.kill()`);
       // TODO - maybe send SIGTERM here and give it some time before
       // dropping the hammer.
       this.ffmpeg.kill('SIGKILL');
@@ -944,7 +944,7 @@ function isDifferentAudioCodec(codec: Maybe<string>, encoder: string) {
   return true;
 }
 
-function isLargerResolution(w1, h1, w2, h2) {
+function isLargerResolution(w1: number, h1: number, w2: number, h2: number) {
   return w1 > w2 || h1 > h2 || w1 % 2 == 1 || h1 % 2 == 1;
 }
 

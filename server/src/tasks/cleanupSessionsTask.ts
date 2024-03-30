@@ -1,9 +1,12 @@
 import { chain, filter, forEach, isEmpty, keys } from 'lodash-es';
+import createLogger from '../logger.js';
 import { sessionManager } from '../stream/sessionManager.js';
 import { Maybe } from '../types.js';
 import { Task, TaskId } from './task.js';
 
 const ThirtySeconds = 30 * 1000;
+
+const logger = createLogger(import.meta);
 
 export class CleanupSessionsTask extends Task<void> {
   public static ID: TaskId = 'cleanup-sessions';
@@ -36,7 +39,7 @@ export class CleanupSessionsTask extends Task<void> {
 
       forEach(staleConnections, (conn) => session.removeConnection(conn));
 
-      console.debug(
+      logger.debug(
         `aliveConnections: ${aliveConnections.join(
           ',',
         )}, stale = ${staleConnections.join(',')}`,

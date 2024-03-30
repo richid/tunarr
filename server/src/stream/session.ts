@@ -11,6 +11,7 @@ import { Channel } from '../dao/entities/Channel.js';
 import { FFMPEG } from '../ffmpeg.js';
 import { serverOptions } from '../globals.js';
 import createLogger from '../logger.js';
+import { Maybe } from '../types.js';
 import { isNodeError } from '../util.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,7 @@ export class StreamSession {
   #connections: Record<string, StreamConnectionDetails> = {};
   #heartbeats: Record<string, number> = {};
   #cleanupFunc: NodeJS.Timeout | null = null;
+  #streamPath: Maybe<string>;
 
   private constructor(channel: Channel, ffmpegSettings: FfmpegSettings) {
     this.#uniqueId = v4();
@@ -76,18 +78,20 @@ export class StreamSession {
   }
 
   private async cleanupDirectory() {
-    return fs
-      .rm(resolve(__dirname, '..', 'streams', `stream_${this.#channel.uuid}`), {
-        recursive: true,
-        force: true,
-      })
-      .catch((err) =>
-        logger.error(
-          'Failed to cleanup stream: %s %O',
-          this.#channel.uuid,
-          err,
-        ),
-      );
+    if (this.#streamPath) {
+      return fs
+        .rm(this.#streamPath, {
+          recursive: true,
+          force: true,
+        })
+        .catch((err) => {
+          logger.error(
+            'Failed to cleanup stream: %s %O',
+            this.#channel.uuid,
+            err,
+          );
+        });
+    }
   }
 
   private async startStream() {
@@ -118,20 +122,21 @@ export class StreamSession {
     });
 
     // TODO this is hacky
-    const outPath = resolve(
+    this.#streamPath = resolve(
       process.cwd(),
       'streams',
       `stream_${this.#channel.uuid}`,
     );
 
-    logger.debug(`Creating stream directory: ${outPath}`);
+    logger.debug(`Creating stream directory: ${this.#streamPath}`);
 
     try {
-      await fs.stat(outPath);
+      await fs.stat(this.#streamPath);
       await this.cleanupDirectory();
+      await fs.mkdir(this.#streamPath);
     } catch (e) {
       if (isNodeError(e) && e.code === 'ENOENT') {
-        await fs.mkdir(outPath);
+        await fs.mkdir(this.#streamPath);
       }
     }
 
@@ -158,7 +163,7 @@ export class StreamSession {
       });
 
       // TODO this is hacky
-      const streamPath = join(outPath, 'stream.m3u8');
+      const streamPath = join(this.#streamPath, 'stream.m3u8');
 
       // Wait for the stream to become ready
       await retry(

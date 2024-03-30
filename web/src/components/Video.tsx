@@ -1,3 +1,4 @@
+import Lightbulb from '@mui/icons-material/Lightbulb';
 import { Alert, Box } from '@mui/material';
 import Button from '@mui/material/Button';
 import Hls from 'hls.js';
@@ -5,8 +6,10 @@ import { isError, isNil } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { apiClient } from '../external/api.ts';
+import { toggle } from '../helpers/util.ts';
 import { useFfmpegSettings } from '../hooks/settingsHooks.ts';
 import { useHls } from '../hooks/useHls.ts';
+import StandaloneToggleButton from './base/StandaloneToggleButton.tsx';
 
 type VideoProps = {
   channelNumber: number;
@@ -19,6 +22,7 @@ export default function Video({ channelNumber }: VideoProps) {
   const [loadedStream, setLoadedStream] = useState<boolean | Error>(false);
   const { data: ffmpegSettings, isLoading: ffmpegSettingsLoading } =
     useFfmpegSettings();
+  const [lightsOff, setLightsOff] = useState(false);
 
   const canLoadStream = useMemo(() => {
     const initialized = !isNil(videoRef.current) && !isNil(hls);
@@ -37,27 +41,24 @@ export default function Video({ channelNumber }: VideoProps) {
 
   // Unload HLS when navigating away
   useEffect(() => {
+    console.log(blocker.state);
     if (blocker.state === 'blocked') {
       if (videoRef.current) {
-        console.log('Pause');
         videoRef.current.pause();
       }
+
       if (hls) {
         hls.detachMedia();
         hls.destroy();
       }
+
       blocker.proceed();
     }
   }, [blocker, hls, videoRef]);
 
-  const reloadStream = useCallback(() => {
-    resetHls();
-    setLoadedStream(false);
-  }, [resetHls, setLoadedStream]);
-
-  useEffect(() => {
+  const attachMedia = () => {
     const video = videoRef.current;
-    if (video && hls && canLoadStream) {
+    if (hls && video) {
       setLoadedStream(true);
       apiClient
         .startHlsStream({ params: { channelNumber } })
@@ -71,6 +72,21 @@ export default function Video({ channelNumber }: VideoProps) {
             isError(err) ? err : new Error('Unable to fetch stream url'),
           );
         });
+    }
+  };
+
+  const reloadStream = useCallback(() => {
+    if (hls && videoRef.current) {
+      hls.detachMedia();
+      setLoadedStream(false);
+      attachMedia();
+    }
+  }, [hls, resetHls, setLoadedStream]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && hls && canLoadStream) {
+      attachMedia();
     }
   }, [videoRef, hls, canLoadStream, setLoadedStream, channelNumber]);
 
@@ -96,8 +112,34 @@ export default function Video({ channelNumber }: VideoProps) {
 
     return (
       <Box>
-        <Button onClick={() => reloadStream()}>Reload</Button>
-        <video style={{ width: '1080px' }} controls autoPlay ref={videoRef} />
+        <Box
+          component="div"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 100000000,
+            display: lightsOff ? 'block' : 'none',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          }}
+        />
+        <Box sx={{ position: 'relative', zIndex: 200000000 }}>
+          <video style={{ width: '1080px' }} controls autoPlay ref={videoRef} />
+          <Button onClick={() => reloadStream()}>Reload</Button>
+          <StandaloneToggleButton
+            selected={lightsOff}
+            onToggle={() => setLightsOff(toggle)}
+          >
+            <Lightbulb
+              sx={{
+                color: (theme) =>
+                  lightsOff ? 'currentColor' : theme.palette.warning.light,
+              }}
+            />
+          </StandaloneToggleButton>
+        </Box>
       </Box>
     );
   };
