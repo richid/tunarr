@@ -8,8 +8,10 @@ import { DeepReadonly } from 'ts-essentials';
 import { serverOptions } from './globals.js';
 import createLogger from './logger.js';
 import { VideoStats } from './plexTranscoder.js';
+import { FilterComplexBuilder } from './stream/ffmpegUtil.js';
 import { ContextChannel, Maybe } from './types.js';
 import { TypedEventEmitter } from './types/eventEmitter.js';
+import { isNonEmptyString } from './util.js';
 
 const spawn = child_process.spawn;
 
@@ -44,6 +46,14 @@ const defaultConcatOptions: ConcatOptions = {
   segmentNameFormat: 'data%05d.ts',
   streamNameFormat: 'stream.m3u8',
   logOutput: false,
+};
+
+type VideoFilterNames = 'video' | 'fpchange' | 'deinterlaced';
+
+const VideoFilters: { [K in VideoFilterNames]: K } = {
+  video: 'video',
+  fpchange: 'fpchange',
+  deinterlaced: 'deinterlaced',
 };
 
 export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<FfmpegEvents>) {
@@ -314,10 +324,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     ];
     let stillImage = false;
 
-    if (
-      limitRead === true &&
-      (this.audioOnly !== true || isString(streamUrl))
-    ) {
+    if (limitRead && (!this.audioOnly || isNonEmptyString(streamUrl))) {
       ffmpegArgs.push(`-re`);
     }
 
@@ -326,16 +333,14 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     }
 
     // Map correct audio index. '?' so doesn't fail if no stream available.
-    const audioIndex = isUndefined(streamStats)
-      ? 'a'
-      : `${streamStats.audioIndex}`;
+    const audioIndex = isUndefined(streamStats) ? 'a' : streamStats.audioIndex;
 
     //TODO: Do something about missing audio stream
     let inputFiles = 0;
     let audioFile = -1;
     let videoFile = -1;
     let overlayFile = -1;
-    if (isString(streamUrl) && !isEmpty(streamUrl)) {
+    if (isNonEmptyString(streamUrl)) {
       ffmpegArgs.push(`-i`, streamUrl);
       videoFile = inputFiles++;
       audioFile = videoFile;
@@ -356,6 +361,9 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     // to the input stream
     const videoIndex = 'v';
     let audioComplex = `;[${audioFile}:${audioIndex}]anull[audio]`;
+    const videoComplexBuilder = new FilterComplexBuilder(
+      `${videoFile}:${videoIndex}`,
+    );
     let videoComplex = `;[${videoFile}:${videoIndex}]null[video]`;
     // Depending on the options we will apply multiple filters
     // each filter modifies the current video stream. Adds a filter to
@@ -366,21 +374,26 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     // videoComplex always begins wiht ; and doesn't end with ;
 
     if ((streamStats?.videoFramerate ?? 0) >= this.opts.maxFPS + 0.000001) {
+      videoComplexBuilder.add(`fps=${this.opts.maxFPS}`, VideoFilters.fpchange);
       videoComplex += `;${currentVideo}fps=${this.opts.maxFPS}[fpchange]`;
       currentVideo = '[fpchange]';
     }
 
     // deinterlace if desired
     if (
-      streamStats?.videoScanType == 'interlaced' &&
-      this.opts.deinterlaceFilter != 'none'
+      streamStats?.videoScanType === 'interlaced' &&
+      this.opts.deinterlaceFilter !== 'none'
     ) {
-      videoComplex += `;${currentVideo}${this.opts.deinterlaceFilter}[deinterlaced]`;
-      currentVideo = '[deinterlaced]';
+      videoComplexBuilder.add(
+        this.opts.deinterlaceFilter,
+        VideoFilters.deinterlaced,
+      );
+      videoComplex += `;${currentVideo}fps=${this.opts.maxFPS}[fpchange]`;
+      currentVideo = '[fpchange]';
     }
 
     // prepare input streams
-    if (!isString(streamUrl) || isEmpty(streamUrl) || streamStats?.audioOnly) {
+    if (!isNonEmptyString(streamUrl) || streamStats?.audioOnly) {
       doOverlay = false; //never show icon in the error screen
       // for error stream, we have to generate the input as well
       this.apad = false; //all of these generate audio correctly-aligned to video so there is no need for apad
@@ -397,9 +410,12 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
         let pic: string | undefined;
 
         //does an image to play exist?
-        if (isString(streamUrl) && streamStats?.audioOnly) {
+        if (isNonEmptyString(streamUrl) && streamStats?.audioOnly) {
           pic = streamStats.placeholderImage;
-        } else if (!isString(streamUrl) && streamUrl.errorTitle == 'offline') {
+        } else if (
+          !isNonEmptyString(streamUrl) &&
+          streamUrl.errorTitle == 'offline'
+        ) {
           // TODO fix me
           const defaultOfflinePic = `http://localhost:${
             serverOptions().port
@@ -409,14 +425,23 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
           pic = this.errorPicturePath;
         }
 
-        logger.error('PIC = ' + pic);
-        if (!isNil(pic) && !isEmpty(pic)) {
+        if (isNonEmptyString(pic)) {
           ffmpegArgs.push('-i', pic);
           if (isUndefined(duration) && !isUndefined(streamStats?.duration)) {
             //add 150 milliseconds just in case, exact duration seems to cut out the last bits of music some times.
             duration = `${streamStats.duration + 150}ms`;
           }
           videoComplex = `;[${inputFiles++}:0]format=yuv420p[formatted]`;
+          videoComplexBuilder
+            .reset(`${inputFiles - 1}:0`)
+            .add('format=yuv420p', 'formatted')
+            .add(
+              `scale=w=${iW}:h=${iH}:force_original_aspect_ratio=1`,
+              'scaled',
+            )
+            .add(`pad=${iW}:${iH}:(ow-iw)/2:(oh-ih)/2`, 'padded')
+            .add(`loop=loop=-1:size=1:start=0`, 'looped')
+            .add('realtime', 'videox');
           videoComplex += `;[formatted]scale=w=${iW}:h=${iH}:force_original_aspect_ratio=1[scaled]`;
           videoComplex += `;[scaled]pad=${iW}:${iH}:(ow-iw)/2:(oh-ih)/2[padded]`;
           videoComplex += `;[padded]loop=loop=-1:size=1:start=0[looped]`;
@@ -555,7 +580,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
         currentVideo = 'blackpadded';
       }
       let name = 'siz';
-      if (!this.ensureResolution && beforeSizeChange != '[fpchange]') {
+      if (!this.ensureResolution && beforeSizeChange !== '[fpchange]') {
         name = 'minsiz';
       }
       videoComplex += `;[${currentVideo}]setsar=1[${name}]`;
@@ -601,7 +626,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
       currentVideo = '[comb]';
     }
 
-    if (this.volumePercent != 100) {
+    if (this.volumePercent !== 100) {
       const f = this.volumePercent / 100.0;
       audioComplex += `;${currentAudio}volume=${f}[boosted]`;
       currentAudio = '[boosted]';
@@ -610,7 +635,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     let transcodeAudio = false;
 
     // Align audio is just the apad filter applied to audio stream
-    if (this.apad && this.audioOnly !== true) {
+    if (this.apad && !this.audioOnly) {
       //it doesn't make much sense to pad audio when there is no video
       audioComplex += `;${currentAudio}apad=whole_dur=${streamStats?.duration}ms[padded]`;
       currentAudio = '[padded]';
@@ -628,8 +653,9 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     transcodeAudio =
       this.opts.normalizeAudioCodec &&
       isDifferentAudioCodec(streamStats?.audioCodec, this.opts.audioEncoder);
+
     let filterComplex = '';
-    if (!transcodeVideo && currentVideo == '[minsiz]') {
+    if (!transcodeVideo && currentVideo === '[minsiz]') {
       //do not change resolution if no other transcoding will be done
       // and resolution normalization is off
       currentVideo = beforeSizeChange;
@@ -637,7 +663,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
       logger.info(resizeMsg);
     }
     if (this.audioOnly !== true) {
-      if (currentVideo != '[video]') {
+      if (currentVideo !== '[video]') {
         transcodeVideo = true; //this is useful so that it adds some lines below
         filterComplex += videoComplex;
       } else {
@@ -653,8 +679,13 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     }
 
     //If there is a filter complex, add it.
-    if (filterComplex != '') {
-      ffmpegArgs.push(`-filter_complex`, filterComplex.slice(1));
+    if (filterComplex !== '') {
+      console.log('filter_complex before ', filterComplex.slice(1));
+      console.log('filter_complex builder ', videoComplexBuilder.build());
+      ffmpegArgs.push(
+        `-filter_complex`,
+        filterComplex.startsWith(';') ? filterComplex.slice(1) : filterComplex,
+      );
       if (this.alignAudio) {
         ffmpegArgs.push('-shortest');
       }

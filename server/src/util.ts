@@ -310,3 +310,7 @@ export const currentEnv = once(() => {
 export const isProduction = currentEnv() === 'production';
 export const isDev = currentEnv() === 'development';
 export const isTest = currentEnv() === 'test';
+
+export function isNonEmptyString(s: unknown): s is string {
+  return isString(s) && !isEmpty(s);
+}

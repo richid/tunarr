@@ -37,7 +37,6 @@ export class OfflinePlayer extends Player {
       };
     }
     this.ffmpeg = new FFMPEG(context.ffmpegSettings, context.channel);
-    console.log(this.context);
     this.ffmpeg.setAudioOnly(this.context.audioOnly);
   }
 
