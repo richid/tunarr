@@ -1,8 +1,10 @@
 import {
   Box,
   Button,
+  Chip,
   CircularProgress,
   Snackbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -36,6 +38,7 @@ export default function ChannelProgrammingPage() {
     currentEntity: channel,
     originalEntity: originalChannel,
     programList: newLineup,
+    schedule: channelSchedule,
   } = usePreloadedChannelEdit();
 
   const queryClient = useQueryClient();
@@ -146,7 +149,25 @@ export default function ChannelProgrammingPage() {
       />
       <Breadcrumbs />
       <Typography variant="h4" sx={{ mb: 2 }}>
-        Channel {channel.number} Programming
+        Channel {channel.number} Programming{' '}
+        {channelSchedule && (
+          <Tooltip
+            title="This channel uses a dynamic schedule. Changes made here may deviate from the schedule"
+            placement="top"
+          >
+            <Chip
+              variant="outlined"
+              color="primary"
+              label={
+                channelSchedule.type === 'time' ? 'Time Slot' : 'Random Slot'
+              }
+              clickable
+              component={RouterLink}
+              to="time-slot-editor"
+              size="small"
+            />
+          </Tooltip>
+        )}
       </Typography>
       <ChannelProgrammingConfig />
       <Box sx={{ display: 'flex', justifyContent: 'end', pt: 1, columnGap: 1 }}>
