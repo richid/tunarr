@@ -8,20 +8,21 @@ import {
   ListItemText,
 } from '@mui/material';
 import { forProgramType } from '@tunarr/shared/util';
-import { CustomProgram, isCustomProgram } from '@tunarr/types';
+import { CustomProgram } from '@tunarr/types';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import { chain, flow, isEmpty, isNil, negate } from 'lodash-es';
+import { chain, isNil } from 'lodash-es';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useIntersectionObserver } from 'usehooks-ts';
-import { typedProperty } from '../../helpers/util';
-import { useCustomShow } from '../../hooks/useCustomShows';
+import { useCustomShow, useCustomShows } from '../../hooks/useCustomShows';
 import useStore from '../../store';
 import { addSelectedMedia } from '../../store/programmingSelector/actions';
+import pluralize from 'pluralize';
 
 dayjs.extend(duration);
 
 export function CustomShowProgrammingSelector() {
+  const { data: customShows, isLoading: loadingCustomShows } = useCustomShows();
   const selectedCustomShow = useStore((s) =>
     s.currentLibrary?.type === 'custom-show' ? s.currentLibrary : null,
   );
@@ -34,7 +35,8 @@ export function CustomShowProgrammingSelector() {
     /*includePrograms=*/ true,
   );
 
-  const isLoading = showResult.isLoading || programsResult.isLoading;
+  const isLoading =
+    loadingCustomShows || showResult.isLoading || programsResult.isLoading;
 
   const formattedTitle = useMemo(
     () =>
@@ -81,39 +83,61 @@ export function CustomShowProgrammingSelector() {
   );
 
   const renderListItems = () => {
-    if (
-      showResult.data &&
-      programsResult.data &&
-      programsResult.data.length > 0
-    ) {
-      return chain(programsResult.data)
-        .filter(isCustomProgram)
-        .filter(typedProperty('persisted'))
-        .filter(flow(typedProperty('program'), negate(isNil)))
-        .map((program) => {
-          let title = formattedTitle(program);
-          const epTitle = formattedEpisodeTitle(program);
-          if (!isEmpty(epTitle)) {
-            title += ` - ${epTitle}`;
-          }
+    // if (
+    //   showResult.data &&
+    //   programsResult.data &&
+    //   programsResult.data.length > 0
+    // ) {
+    //   return chain(programsResult.data)
+    //     .filter(isCustomProgram)
+    //     .filter(typedProperty('persisted'))
+    //     .filter(flow(typedProperty('program'), negate(isNil)))
+    //     .map((program) => {
+    //       let title = formattedTitle(program);
+    //       const epTitle = formattedEpisodeTitle(program);
+    //       if (!isEmpty(epTitle)) {
+    //         title += ` - ${epTitle}`;
+    //       }
 
+    //       return (
+    //         <ListItem dense key={program.id}>
+    //           <ListItemText
+    //             // TODO add season and episode number?
+    //             primary={title}
+    //             secondary={dayjs.duration(program.duration).humanize()}
+    //           />
+    //           <Button
+    //             onClick={(e) => handleItem(e, program)}
+    //             variant="contained"
+    //           >
+    //             Add
+    //           </Button>
+    //         </ListItem>
+    //       );
+    //     })
+    //     .compact()
+    //     .value();
+    // }
+
+    if (!isLoading) {
+      return chain(customShows)
+        .map((customShow) => {
           return (
-            <ListItem dense key={program.id}>
+            <ListItem dense key={customShow.id}>
               <ListItemText
                 // TODO add season and episode number?
-                primary={title}
-                secondary={dayjs.duration(program.duration).humanize()}
+                primary={customShow.name}
+                secondary={`${customShow.contentCount} ${pluralize('program')}`}
               />
               <Button
-                onClick={(e) => handleItem(e, program)}
+                // onClick={(e) => handleItem(e, program)}
                 variant="contained"
               >
-                Add
+                Add Show
               </Button>
             </ListItem>
           );
         })
-        .compact()
         .value();
     }
 
