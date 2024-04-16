@@ -1,0 +1,420 @@
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fbdcf7063c0] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fbdcf7063c0] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0839x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fbdcf708b40] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fd0e3f061c0] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fd0e3f061c0] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0742x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fd0e3f084c0] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7ff6a7a04180] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7ff6a7a04180] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.065x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7ff6a7905d00] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7f8f7f708380] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7f8f7f708380] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0779x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7f8f7f70a200] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fba3e108500] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fba3e108500] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.092x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fba3e1063c0] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fb3c5908440] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fb3c5908440] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0826x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fb3c5908600] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fd4bca07380] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fd4bca07380] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0852x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fd4bca09040] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fd7392055c0] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fd7392055c0] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0782x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fd739208100] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fc01f706f80] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fc01f706f80] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0715x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fc01f709d40] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fb83bf05700] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fb83bf05700] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.9 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0189x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fb83bf08080] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fb89ca08440] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fb89ca08440] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0821x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fb89ca08600] Qavg: 65536.000
+ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
+  built with Apple clang version 15.0.0 (clang-1500.0.40.1)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/6.0_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      58.  2.100 / 58.  2.100
+  libavcodec     60.  3.100 / 60.  3.100
+  libavformat    60.  3.100 / 60.  3.100
+  libavdevice    60.  1.100 / 60.  1.100
+  libavfilter     9.  3.100 /  9.  3.100
+  libswscale      7.  1.100 /  7.  1.100
+  libswresample   4. 10.100 /  4. 10.100
+  libpostproc    57.  1.100 / 57.  1.100
+Input #0, png_pipe, from 'http://localhost:8000/images/loading-screen.png':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 3780:3780 DAR 16:9], 25 fps, 25 tbr, 25 tbn
+[out#0/mpegts @ 0x7fb366405680] Codec AVOption sc_threshold (Scene change threshold) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+[out#0/mpegts @ 0x7fb366405680] Codec AVOption tune (The metric that the encoder tunes for. Automatically chosen by the encoder by default) has not been used for any stream. The most likely reason is either wrong type (e.g. a video option with no video streams) or that it is a private option of some encoder which was not actually used for any stream.
+Stream mapping:
+  Stream #0:0 (png) -> format:default
+  realtime:default -> Stream #0:0 (h264_videotoolbox)
+  arealtime:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mpegts, to 'pipe:1':
+  Metadata:
+    service_provider: "tunarr"
+    service_name    : "Always Redirect"
+    encoder         : Lavf60.3.100
+  Stream #0:0: Video: h264, yuv420p(tv, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 30000 kb/s, 24 fps, 90k tbn
+    Metadata:
+      encoder         : Lavc60.3.100 h264_videotoolbox
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc60.3.100 aac
+frame=    0 fps=0.0 q=0.0 size=       0kB time=-577014:32:22.77 bitrate=  -0.0kbits/s speed=N/A    frame=    1 fps=0.0 q=-0.0 Lsize=       9kB time=00:00:00.02 bitrate=3313.6kbits/s speed=0.0757x    
+video:7kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 18.731524%
+[aac @ 0x7fb366406300] Qavg: 65536.000

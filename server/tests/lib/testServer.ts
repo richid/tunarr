@@ -1,7 +1,7 @@
-import { initOrm } from '../src/dao/dataSource.js';
-import { initServer } from '../src/server.js';
-import config from '../mikro-orm.config.js';
-import { serverOptions, setServerOptions } from '../src/globals.js';
+import { initOrm } from '../../src/dao/dataSource.js';
+import { initServer } from '../../src/server.js';
+import config from '../../mikro-orm.config.js';
+import { serverOptions, setServerOptions } from '../../src/globals.js';
 import { v4 } from 'uuid';
 
 export async function initTestApp(port: number) {
@@ -17,7 +17,7 @@ export async function initTestApp(port: number) {
   await initOrm({
     ...config,
     // no need for debug information, it would only pollute the logs
-    debug: false,
+    debug: true,
     // we will use in-memory database, this way we can easily parallelize our tests
     dbName: ':memory:',
     // this will ensure the ORM discovers TS entities, with ts-node, ts-jest and vitest

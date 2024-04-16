@@ -1,11 +1,12 @@
 import fc from 'fast-check';
 import { FastifyInstance } from 'fastify';
-import { afterAll, beforeAll, expect, test } from 'vitest';
-import { initTestApp } from './testServer.js';
+import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
+import { initTestApp } from './lib/testServer.js';
 import { initOrm } from '../src/dao/dataSource.js';
 import { Channel } from '../src/dao/entities/Channel.js';
 import { z } from 'zod';
 import { ChannelSchema } from '@tunarr/types/schemas';
+import { genChannel } from './lib/generators.js';
 
 let app: FastifyInstance;
 
@@ -22,35 +23,32 @@ afterAll(async () => {
 
 test('list all channels', async () => {
   const orm = await initOrm();
-  const em = orm.em.fork();
 
-  const channel = em.create(Channel, {
-    number: 1,
-    guideMinimumDuration: 30,
-    name: 'Channel 1',
-    duration: 100,
-    stealth: false,
-    groupTitle: 'tv',
-    startTime: new Date().getTime(),
-    disableFillerOverlay: false,
-    offline: { mode: 'pic' },
-  });
+  await fc.assert(
+    fc.asyncProperty(genChannel(), async (arbChannel) => {
+      const em = orm.em.fork();
 
-  await em.persistAndFlush(channel);
+      await em.fork().nativeDelete(Channel, {});
 
-  // mimic the http request via `app.inject()`
-  const res = await app.inject({
-    method: 'get',
-    url: '/api/channels',
-  });
+      const channel = em.create(Channel, arbChannel);
 
-  // assert it was successful response
-  expect(res.statusCode).toBe(200);
+      await em.persistAndFlush(channel);
 
-  const parsed = z.array(ChannelSchema).safeParse(res.json());
-  expect(parsed.success).toBe(true);
+      // mimic the http request via `app.inject()`
+      const res = await app.inject({
+        method: 'get',
+        url: '/api/channels',
+      });
 
-  if (parsed.success) {
-    // expect(parsed.data).toMatchObject([channel]);
-  }
+      // assert it was successful response
+      expect(res.statusCode).toBe(200);
+
+      const parsed = z.array(ChannelSchema).safeParse(res.json());
+      expect(parsed.success).toBe(true);
+
+      if (parsed.success) {
+        // expect(parsed.data).toMatchObject([channel]);
+      }
+    }),
+  );
 });
