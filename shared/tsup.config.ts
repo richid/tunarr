@@ -12,4 +12,5 @@ export default defineConfig({
   format: 'esm',
   outDir: 'build',
   sourcemap: true,
+  target: 'esnext',
 });

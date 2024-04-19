@@ -69,7 +69,7 @@ const AddRerunBlockModal = ({ open, onClose }: AddRerunModalProps) => {
             <InputLabel id="rerun-repeats-label">Repeats</InputLabel>
             <Select
               value={'fixed'}
-              label={'Type'}
+              label={'Repeats'}
               labelId="rerun-repeats-label"
               id="rerun-repeats"
             >
