@@ -30,10 +30,12 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import {
   chain,
+  countBy,
   filter,
   first,
   isNull,
   isUndefined,
+  keys,
   map,
   maxBy,
   range,
@@ -44,7 +46,10 @@ import { Fragment, useCallback, useMemo, useState } from 'react';
 import {
   Control,
   Controller,
+  FieldArrayWithId,
+  UseFieldArrayAppend,
   UseFormSetValue,
+  useFieldArray,
   useForm,
   useWatch,
 } from 'react-hook-form';
@@ -168,29 +173,22 @@ const lineupItemAppearsInSchedule = (
 };
 
 type AddTimeSlotButtonProps = {
-  control: Control<TimeSlotForm>;
-  setValue: UseFormSetValue<TimeSlotForm>;
+  fields: FieldArrayWithId<TimeSlotForm, 'slots', 'id'>[];
+  append: UseFieldArrayAppend<TimeSlotForm, 'slots'>;
 };
 
-const AddTimeSlotButton = ({ control, setValue }: AddTimeSlotButtonProps) => {
-  const currentSlots = useWatch({ control, name: 'slots' });
-
+const AddTimeSlotButton = ({ fields, append }: AddTimeSlotButtonProps) => {
   const addSlot = useCallback(() => {
-    const maxSlot = maxBy(currentSlots, (p) => p.startTime);
+    const maxSlot = maxBy(fields, (p) => p.startTime);
     const newStartTime = maxSlot
       ? dayjs.duration(maxSlot.startTime).add(1, 'hour')
       : dayjs.duration(new Date().getTimezoneOffset(), 'minutes');
-    const newSlots: TimeSlot[] = [
-      ...currentSlots,
-      {
-        programming: { type: 'flex' },
-        startTime: newStartTime.asMilliseconds(),
-        order: 'next',
-      },
-    ];
-
-    setValue('slots', newSlots, { shouldDirty: true });
-  }, [currentSlots, setValue]);
+    append({
+      programming: { type: 'flex' },
+      startTime: newStartTime.asMilliseconds(),
+      order: 'next',
+    });
+  }, [fields, append]);
 
   return (
     <Button
@@ -218,20 +216,25 @@ const TimeSlotRow = ({
   setValue,
   programOptions,
 }: TimeSlotProps) => {
-  const start = dayjs.tz().startOf('day');
+  const start = dayjs
+    .tz()
+    .startOf('day')
+    .subtract(new Date().getTimezoneOffset(), 'minutes');
   const currentSlots = useWatch({ control, name: 'slots' });
   const currentPeriod = useWatch({ control, name: 'period' });
-
-  const updateSlotTime = useCallback(
-    (idx: number, time: dayjs.Dayjs) => {
-      setValue(
-        `slots.${idx}.startTime`,
-        time.mod(dayjs.duration(1, 'day')).asMilliseconds(),
-        { shouldDirty: true },
-      );
-    },
-    [setValue],
-  );
+  control.register('slots', {
+    minLength: 1,
+  });
+  // const updateSlotTime = useCallback(
+  //   (idx: number, time: dayjs.Dayjs) => {
+  //     setValue(
+  //       `slots.${idx}.startTime`,
+  //       time.mod(dayjs.duration(1, 'day')).asMilliseconds(),
+  //       { shouldDirty: true },
+  //     );
+  //   },
+  //   [setValue],
+  // );
 
   const removeSlot = useCallback(
     (idx: number) => {
@@ -299,6 +302,7 @@ const TimeSlotRow = ({
   const startTime = start
     .add(slot.startTime)
     .subtract(new Date().getTimezoneOffset(), 'minutes');
+
   let selectValue: string;
   switch (slot.programming.type) {
     case 'show': {
@@ -336,10 +340,36 @@ const TimeSlotRow = ({
         </Grid>
       ) : null}
       <Grid item xs={2}>
-        <TimePicker
-          onChange={(value) => value && updateSlotTime(index, value)}
-          value={startTime}
-          label="Start Time"
+        <Controller
+          control={control}
+          name={`slots.${index}.startTime`}
+          rules={{
+            validate: {
+              uniqueTime: (value, formValues) => {
+                console.log(value, formValues);
+                const rest = countBy(formValues.slots, 'startTime');
+                console.log(rest, rest[value]);
+                return rest[value] === 1 ? true : 'Unique start time needed';
+              },
+            },
+          }}
+          render={({ field, fieldState: { invalid, error } }) => (
+            <TimePicker
+              onChange={(value) =>
+                value &&
+                field.onChange(
+                  value.mod(dayjs.duration(1, 'day')).asMilliseconds(),
+                )
+              }
+              value={start.add(field.value)}
+              label="Start Time"
+              slotProps={{
+                textField: {
+                  helperText: `${invalid} ${error}`,
+                },
+              }}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={showInputSize}>
@@ -425,14 +455,23 @@ export default function TimeSlotEditorPage() {
     getValues,
     setValue,
     watch,
-    formState: { isValid, isDirty },
+    formState: { isValid, isDirty, errors },
     reset,
   } = useForm<TimeSlotForm>({
+    reValidateMode: 'onChange',
     defaultValues:
       !isUndefined(loadedSchedule) && loadedSchedule.type === 'time'
         ? loadedSchedule
         : defaultTimeSlotSchedule,
   });
+  const { fields, append, replace } = useFieldArray({
+    control,
+    name: 'slots',
+    rules: {
+      minLength: 1,
+    },
+  });
+  console.log(isValid, isDirty, keys(errors));
 
   // Have to use a watch here because rendering depends on this value
   const currentPeriod = watch('period');
@@ -451,7 +490,7 @@ export default function TimeSlotEditorPage() {
     setGeneratedList(undefined);
     resetLineup();
     reset();
-  }, [setGeneratedList]);
+  }, [reset]);
 
   const onSave = () => {
     const schedule: TimeSlotSchedule = {
@@ -520,9 +559,10 @@ export default function TimeSlotEditorPage() {
       }
 
       // Add slots
-      setValue('slots', newSlots, { shouldDirty: true });
+      replace(newSlots);
+      // setValue('slots', newSlots, { shouldDirty: true });
     },
-    [setValue, currentSlots],
+    [setValue, replace, currentSlots],
   );
 
   const renderTimeSlots = () => {
@@ -626,7 +666,7 @@ export default function TimeSlotEditorPage() {
         </Typography>
         <Divider sx={{ my: 2 }} />
         {renderTimeSlots()}
-        <AddTimeSlotButton control={control} setValue={setValue} />
+        <AddTimeSlotButton fields={fields} append={append} />
         <Divider sx={{ my: 2 }} />
         <Typography sx={{ flexGrow: 1, fontWeight: '600' }}>
           Settings
