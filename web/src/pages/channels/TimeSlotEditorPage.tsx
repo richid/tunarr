@@ -19,7 +19,11 @@ import {
 } from '@mui/material';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { dayjsMod, scheduleTimeSlots } from '@tunarr/shared';
-import { ChannelProgram, isContentProgram } from '@tunarr/types';
+import {
+  ChannelProgram,
+  CondensedChannelProgramming,
+  isContentProgram,
+} from '@tunarr/types';
 import {
   TimeSlot,
   TimeSlotProgramming,
@@ -35,7 +39,6 @@ import {
   first,
   isNull,
   isUndefined,
-  keys,
   map,
   maxBy,
   range,
@@ -222,19 +225,6 @@ const TimeSlotRow = ({
     .subtract(new Date().getTimezoneOffset(), 'minutes');
   const currentSlots = useWatch({ control, name: 'slots' });
   const currentPeriod = useWatch({ control, name: 'period' });
-  control.register('slots', {
-    minLength: 1,
-  });
-  // const updateSlotTime = useCallback(
-  //   (idx: number, time: dayjs.Dayjs) => {
-  //     setValue(
-  //       `slots.${idx}.startTime`,
-  //       time.mod(dayjs.duration(1, 'day')).asMilliseconds(),
-  //       { shouldDirty: true },
-  //     );
-  //   },
-  //   [setValue],
-  // );
 
   const removeSlot = useCallback(
     (idx: number) => {
@@ -299,10 +289,6 @@ const TimeSlotRow = ({
     [currentSlots, setValue],
   );
 
-  const startTime = start
-    .add(slot.startTime)
-    .subtract(new Date().getTimezoneOffset(), 'minutes');
-
   let selectValue: string;
   switch (slot.programming.type) {
     case 'show': {
@@ -346,10 +332,9 @@ const TimeSlotRow = ({
           rules={{
             validate: {
               uniqueTime: (value, formValues) => {
-                console.log(value, formValues);
-                const rest = countBy(formValues.slots, 'startTime');
-                console.log(rest, rest[value]);
-                return rest[value] === 1 ? true : 'Unique start time needed';
+                return countBy(formValues.slots, 'startTime')[value] === 1
+                  ? true
+                  : 'Unique start time needed';
               },
             },
           }}
@@ -365,7 +350,9 @@ const TimeSlotRow = ({
               label="Start Time"
               slotProps={{
                 textField: {
-                  helperText: `${invalid} ${error}`,
+                  onBlur: field.onBlur,
+                  helperText: error?.message ?? '',
+                  error: invalid,
                 },
               }}
             />
@@ -410,8 +397,6 @@ export default function TimeSlotEditorPage() {
     channel?.startTime ?? dayjs().unix() * 1000,
   );
 
-  const updateLineupMutation = useUpdateLineup();
-
   // TODO: This can be shared between random / time slots
   const programOptions: ProgramOption[] = useMemo(() => {
     const contentPrograms = filter(newLineup, isContentProgram);
@@ -455,27 +440,44 @@ export default function TimeSlotEditorPage() {
     getValues,
     setValue,
     watch,
-    formState: { isValid, isDirty, errors },
+    formState,
     reset,
+    handleSubmit,
   } = useForm<TimeSlotForm>({
-    reValidateMode: 'onChange',
+    mode: 'onBlur',
     defaultValues:
       !isUndefined(loadedSchedule) && loadedSchedule.type === 'time'
         ? loadedSchedule
         : defaultTimeSlotSchedule,
   });
-  const { fields, append, replace } = useFieldArray({
+
+  const { isValid, isDirty } = formState;
+
+  const {
+    fields: currentSlots,
+    append,
+    replace,
+  } = useFieldArray({
     control,
     name: 'slots',
     rules: {
       minLength: 1,
     },
   });
-  console.log(isValid, isDirty, keys(errors));
+
+  const resetForm = useCallback(
+    (newProgramming: CondensedChannelProgramming) => {
+      reset(newProgramming.schedule);
+    },
+    [reset],
+  );
+
+  const updateLineupMutation = useUpdateLineup({
+    onSuccess: resetForm,
+  });
 
   // Have to use a watch here because rendering depends on this value
   const currentPeriod = watch('period');
-  const currentSlots = watch('slots');
 
   const [perfSnackbarDetails, setPerfSnackbarDetails] = useState<{
     ms: number;
@@ -492,9 +494,9 @@ export default function TimeSlotEditorPage() {
     reset();
   }, [reset]);
 
-  const onSave = () => {
+  const onSave = (values: TimeSlotForm) => {
     const schedule: TimeSlotSchedule = {
-      ...getValues(),
+      ...values,
       timeZoneOffset: new Date().getTimezoneOffset(),
       type: 'time',
     };
@@ -569,7 +571,7 @@ export default function TimeSlotEditorPage() {
     const slots = map(currentSlots, (slot, idx) => {
       return (
         <TimeSlotRow
-          key={`${slot.startTime}_${idx}`}
+          key={slot.id}
           control={control}
           index={idx}
           programOptions={programOptions}
@@ -639,7 +641,7 @@ export default function TimeSlotEditorPage() {
   }
 
   return (
-    <div>
+    <Box component="form" onSubmit={handleSubmit(onSave, console.error)}>
       <Snackbar
         open={!isNull(perfSnackbarDetails)}
         autoHideDuration={5000}
@@ -666,7 +668,7 @@ export default function TimeSlotEditorPage() {
         </Typography>
         <Divider sx={{ my: 2 }} />
         {renderTimeSlots()}
-        <AddTimeSlotButton fields={fields} append={append} />
+        <AddTimeSlotButton fields={currentSlots} append={append} />
         <Divider sx={{ my: 2 }} />
         <Typography sx={{ flexGrow: 1, fontWeight: '600' }}>
           Settings
@@ -784,6 +786,16 @@ export default function TimeSlotEditorPage() {
                   control={control}
                   name="maxDays"
                   prettyFieldName="Days to Precalculate"
+                  rules={{
+                    min: {
+                      value: 1,
+                      message: "Can't precalculate fewer than 1 day",
+                    },
+                    max: {
+                      value: 365,
+                      message: "Can't precalculte more than 1 year.",
+                    },
+                  }}
                   TextFieldProps={{
                     label: 'Days to Precalculate',
                     fullWidth: true,
@@ -852,12 +864,13 @@ export default function TimeSlotEditorPage() {
         )}
         <Button
           variant="contained"
+          type="submit"
           disabled={!isValid || !isDirty}
-          onClick={() => onSave()}
+          // onClick={() => onSave()}
         >
           Save
         </Button>
       </Box>
-    </div>
+    </Box>
   );
 }

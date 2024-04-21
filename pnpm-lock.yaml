@@ -399,7 +399,7 @@ importers:
         version: 11.11.0(@emotion/react@11.11.1)(@types/react@18.2.15)(react@18.2.0)
       '@hookform/error-message':
         specifier: ^2.0.1
-        version: 2.0.1(react-dom@18.2.0)(react-hook-form@7.48.2)(react@18.2.0)
+        version: 2.0.1(react-dom@18.2.0)(react-hook-form@7.51.3)(react@18.2.0)
       '@mui/icons-material':
         specifier: ^5.14.16
         version: 5.14.16(@mui/material@5.14.17)(@types/react@18.2.15)(react@18.2.0)
@@ -470,8 +470,8 @@ importers:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
-        specifier: ^7.48.2
-        version: 7.48.2(react@18.2.0)
+        specifier: ^7.51.3
+        version: 7.51.3(react@18.2.0)
       react-router-dom:
         specifier: ^6.22.0
         version: 6.22.1(react-dom@18.2.0)(react@18.2.0)
@@ -1784,7 +1784,7 @@ packages:
     resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
     dev: false
 
-  /@hookform/error-message@2.0.1(react-dom@18.2.0)(react-hook-form@7.48.2)(react@18.2.0):
+  /@hookform/error-message@2.0.1(react-dom@18.2.0)(react-hook-form@7.51.3)(react@18.2.0):
     resolution: {integrity: sha512-U410sAr92xgxT1idlu9WWOVjndxLdgPUHEB8Schr27C9eh7/xUnITWpCMF93s+lGiG++D4JnbSnrb5A21AdSNg==}
     peerDependencies:
       react: '>=16.8.0'
@@ -1793,7 +1793,7 @@ packages:
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-      react-hook-form: 7.48.2(react@18.2.0)
+      react-hook-form: 7.51.3(react@18.2.0)
     dev: false
 
   /@humanwhocodes/config-array@0.11.14:
@@ -9096,8 +9096,8 @@ packages:
       scheduler: 0.23.0
     dev: false
 
-  /react-hook-form@7.48.2(react@18.2.0):
-    resolution: {integrity: sha512-H0T2InFQb1hX7qKtDIZmvpU1Xfn/bdahWBN1fH19gSe4bBEqTfmlr7H3XWTaVtiK4/tpPaI1F3355GPMZYge+A==}
+  /react-hook-form@7.51.3(react@18.2.0):
+    resolution: {integrity: sha512-cvJ/wbHdhYx8aviSWh28w9ImjmVsb5Y05n1+FW786vEZQJV5STNM0pW6ujS+oiBecb0ARBxJFyAnXj9+GHXACQ==}
     engines: {node: '>=12.22.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18
