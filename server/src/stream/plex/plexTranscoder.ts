@@ -27,10 +27,10 @@ type PlexStream = {
   directPlay: boolean;
   streamUrl: string;
   separateVideoStream?: string;
-  streamStats?: VideoStats;
+  streamDetails: VideoStreamDetails;
 };
 
-export type VideoStats = {
+export type VideoStreamDetails = {
   duration?: number;
   anamorphic?: boolean;
   pixelP?: number;
@@ -219,7 +219,7 @@ export class PlexTranscoder {
       directPlay,
       streamUrl,
       separateVideoStream,
-      streamStats,
+      streamDetails: streamStats,
     };
 
     this.log('PlexStream: %O', stream);
@@ -423,8 +423,8 @@ lang=en`;
   }
 
   // TODO - cache this somehow so we only update VideoStats if decisionJson or directInfo change
-  getVideoStats(): VideoStats {
-    const ret: Partial<VideoStats> = {};
+  getVideoStats(): VideoStreamDetails {
+    const ret: Partial<VideoStreamDetails> = {};
 
     try {
       const streams: TranscodeDecisionMediaStream[] =
@@ -493,7 +493,7 @@ lang=en`;
 
     this.log('Current video stats: %O', ret);
 
-    return ret as Required<VideoStats>; // This isn't technically right, but this is how the current code treats this
+    return ret as Required<VideoStreamDetails>; // This isn't technically right, but this is how the current code treats this
   }
 
   private async getAudioIndex() {

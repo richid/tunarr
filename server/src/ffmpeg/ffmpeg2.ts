@@ -11,14 +11,6 @@ import { StreamContextChannel } from '../stream/types.js';
 import { Maybe } from '../types/util.js';
 import { TypedEventEmitter } from '../types/eventEmitter.js';
 import stream, { Writable } from 'stream';
-import { AudioStream, VideoStream } from './builder/MediaStream.js';
-import { AudioInputFile, FrameSize, VideoInputFile } from './builder/types.js';
-import { AudioState } from './builder/state/AudioState.js';
-import { PipelineBuilderFactory } from './builder/pipeline/PipelineBuilderFactory.js';
-import { FfmpegState } from './builder/state/FfmpegState.js';
-import { FrameState } from './builder/state/FrameState.js';
-import { FfmpegCommandGenerator } from './builder/FfmpegCommandGenerator.js';
-import { VideoFormats } from './builder/constants.js';
 
 const spawn = child_process.spawn;
 
@@ -280,82 +272,13 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
 
   spawnStream(
     streamUrl: string,
-    streamStats: VideoStreamDetails,
+    streamStats: Maybe<VideoStreamDetails>,
     startTime: Maybe<number>,
     duration: Maybe<string>,
     enableIcon: Maybe<Watermark>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: string, //LineupItem[type]
   ) {
-    const stream = VideoStream.create({
-      index: 0, // stream index 0 on input index 0
-      codec:
-        this.opts.normalizeVideoCodec &&
-        isDifferentVideoCodec(streamStats.videoCodec, this.opts.videoEncoder)
-          ? streamStats.videoCodec ?? ''
-          : VideoFormats.Copy,
-      pixelFormat: null, // Do we know this?
-      frameSize: FrameSize.create({
-        width: streamStats.videoWidth,
-        height: streamStats.videoHeight,
-      }),
-      isAnamorphic: streamStats.anamorphic ?? false,
-      pixelAspectRatio:
-        !isUndefined(streamStats.pixelP) && !isUndefined(streamStats.pixelQ)
-          ? `${streamStats.pixelP}:${streamStats.pixelQ}`
-          : null,
-      inputKind: 'video',
-    });
-
-    const videoInput = new VideoInputFile(streamUrl, [stream]);
-    const audioInput = new AudioInputFile(
-      streamUrl,
-      [
-        AudioStream.create({
-          index: 1, // stream index 1 on input index 0
-          codec: streamStats.audioCodec ?? '',
-          channels: streamStats.audioChannels ?? 2,
-        }),
-      ],
-      AudioState.create({
-        audioEncoder: this.opts.audioEncoder,
-        audioBitrate: this.opts.audioBitrate,
-        audioBufferSize: this.opts.audioBufferSize,
-        audioChannels: this.opts.audioChannels,
-        audioVolume: this.opts.audioVolumePercent,
-        audioSampleRate: this.opts.audioSampleRate,
-      }),
-    );
-
-    const builder = PipelineBuilderFactory.getBuilder(
-      'nvenc',
-      videoInput,
-      audioInput,
-    );
-
-    const args = new FfmpegCommandGenerator().generateArgs(
-      videoInput,
-      builder.build(
-        FfmpegState.create({
-          start: startTime?.toString(),
-          threadCount: this.opts.numThreads,
-          softwareScalingAlgorithm: this.opts.scalingAlgorithm,
-        }),
-        FrameState({
-          videoFormat: 'mpegts',
-          scaledSize: FrameSize.create({
-            width: this.wantedW,
-            height: this.wantedH,
-          }),
-          paddedSize: FrameSize.create({
-            width: this.wantedW,
-            height: this.wantedH,
-          }),
-          isAnamorphic: false,
-        }),
-      ),
-    );
-
-    console.log(args.join(' '));
-
     return this.spawn(
       streamUrl,
       streamStats,
@@ -410,6 +333,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
       videoHeight: this.wantedH,
       duration: duration,
     };
+
     return this.spawn(
       { errorTitle: 'offline' },
       streamStats,
