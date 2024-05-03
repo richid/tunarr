@@ -22,7 +22,6 @@ import { PipelineBuilderFactory } from './builder/pipeline/PipelineBuilderFactor
 import { FfmpegState } from './builder/state/FfmpegState.js';
 import { FrameState } from './builder/state/FrameState.js';
 import { FfmpegCommandGenerator } from './builder/FfmpegCommandGenerator.js';
-import { VideoFormats } from './builder/constants.js';
 
 const spawn = child_process.spawn;
 
@@ -291,11 +290,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
   ) {
     const stream = VideoStream.create({
       index: 0, // stream index 0 on input index 0
-      codec:
-        this.opts.normalizeVideoCodec &&
-        isDifferentVideoCodec(streamStats.videoCodec, this.opts.videoEncoder)
-          ? streamStats.videoCodec ?? ''
-          : VideoFormats.Copy,
+      codec: streamStats.videoCodec ?? '',
       pixelFormat: null, // Do we know this?
       frameSize: FrameSize.create({
         width: streamStats.videoWidth,
