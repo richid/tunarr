@@ -12,7 +12,11 @@ import { Maybe } from '../types/util.js';
 import { TypedEventEmitter } from '../types/eventEmitter.js';
 import stream, { Writable } from 'stream';
 import { AudioStream, VideoStream } from './builder/MediaStream.js';
-import { AudioInputFile, FrameSize, VideoInputFile } from './builder/types.js';
+import {
+  AudioInputSource,
+  FrameSize,
+  VideoInputSource,
+} from './builder/types.js';
 import { AudioState } from './builder/state/AudioState.js';
 import { PipelineBuilderFactory } from './builder/pipeline/PipelineBuilderFactory.js';
 import { FfmpegState } from './builder/state/FfmpegState.js';
@@ -305,8 +309,8 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
       inputKind: 'video',
     });
 
-    const videoInput = new VideoInputFile(streamUrl, [stream]);
-    const audioInput = new AudioInputFile(
+    const videoInput = new VideoInputSource(streamUrl, [stream]);
+    const audioInput = new AudioInputSource(
       streamUrl,
       [
         AudioStream.create({
@@ -420,7 +424,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
     );
   }
 
-  spawn(
+  private spawn(
     streamUrl: string | { errorTitle: string; subtitle?: string },
     streamStats: Maybe<VideoStreamDetails>,
     startTime: Maybe<number>,
