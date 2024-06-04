@@ -27,6 +27,13 @@ export type SupportedHardwareAccels = TupleToUnion<
 
 export const DefaultHardwareAccel = 'none';
 
+export const HlsSettingsSchema = z.object({
+  // Defaults to streams/ relative to process.cwd(),
+  // but we can't encode that here because this library
+  // is shared with the frontend
+  hlsOutputDirectory: z.string().optional(),
+});
+
 export const FfmpegSettingsSchema = z.object({
   configVersion: z.number().default(5),
   ffmpegExecutablePath: z.string().default('/usr/bin/ffmpeg'),
@@ -85,6 +92,7 @@ export const FfmpegSettingsSchema = z.object({
     .default('none'),
   disableChannelOverlay: z.boolean().default(true),
   disableChannelPrelude: z.boolean().default(false),
+  hlsSettings: HlsSettingsSchema.default({}),
 });
 
 export const PlexServerSettingsSchema = z.object({

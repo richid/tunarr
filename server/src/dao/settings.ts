@@ -11,7 +11,7 @@ import {
   defaultPlexStreamSettings,
   defaultXmlTvSettings as defaultXmlTvSettingsSchema,
 } from '@tunarr/types';
-import { isUndefined, merge, once } from 'lodash-es';
+import { assign, isUndefined, merge, once } from 'lodash-es';
 import { Low, LowSync } from 'lowdb';
 import path from 'path';
 import chokidar from 'chokidar';
@@ -37,6 +37,7 @@ import {
 import events from 'events';
 import { TypedEventEmitter } from '../types/eventEmitter.js';
 import { existsSync } from 'node:fs';
+import { getDefaultHlsOutputPath } from '../stream/HlsSession.js';
 
 const CURRENT_VERSION = 1;
 
@@ -90,7 +91,11 @@ export const defaultSettings = (dbBasePath: string): SettingsFile => ({
     hdhr: defaultHdhrSettings,
     xmltv: defaultXmlTvSettings(dbBasePath),
     plexStream: defaultPlexStreamSettings,
-    ffmpeg: defaultFfmpegSettings,
+    ffmpeg: assign({}, defaultFfmpegSettings, {
+      hlsSettings: {
+        hlsOutputDirectory: getDefaultHlsOutputPath(),
+      },
+    }),
   },
   system: {
     logging: {

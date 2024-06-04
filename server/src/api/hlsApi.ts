@@ -181,17 +181,17 @@ export const hlsApi: RouterPluginAsyncCallback = async (fastify) => {
   );
 
   fastify.get(
-    '/media-player/:number/session',
+    '/media-player/:channelIdOrNumber/session',
     {
       schema: {
         params: z.object({
-          number: z.coerce.number(),
+          channelIdOrNumber: z.coerce.number().or(z.string().uuid()),
         }),
       },
     },
     async (req, res) => {
       const channel = await req.serverCtx.channelDB.getChannel(
-        req.params.number,
+        req.params.channelIdOrNumber,
       );
       if (isNil(channel)) {
         return res.status(404).send("Channel doesn't exist");

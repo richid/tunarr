@@ -158,7 +158,9 @@ function GeneralSettingsForm({ systemSettings }: GeneralSetingsFormProps) {
                   {...field}
                 >
                   {map(LogLevelChoices, ({ value, description }) => (
-                    <MenuItem value={value}>{description}</MenuItem>
+                    <MenuItem key={value} value={value}>
+                      {description}
+                    </MenuItem>
                   ))}
                 </Select>
               )}

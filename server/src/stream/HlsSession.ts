@@ -6,10 +6,33 @@ import { isError, isString } from 'lodash-es';
 import { ConcatStream } from './ConcatStream';
 import { Channel } from '../dao/entities/Channel';
 import { join, resolve } from 'node:path';
+import { getSettings } from '../dao/settings';
+
+export function getDefaultHlsOutputPath() {
+  return resolve(process.cwd(), 'streams');
+}
 
 export type HlsSessionOptions = SessionOptions & {
   sessionType: 'hls';
+  streamOutputPath: string;
 };
+
+export class HlsSessionFactory {
+  private constructor() {}
+
+  static create(
+    channel: Channel,
+    opts: Omit<Partial<HlsSessionOptions>, 'sessionType' | 'streamOutputPath'>,
+  ): HlsSession {
+    const settings = getSettings().ffmpegSettings();
+    return new HlsSession(channel, {
+      ...opts,
+      sessionType: 'hls',
+      streamOutputPath:
+        settings.hlsSettings.hlsOutputDirectory ?? getDefaultHlsOutputPath(),
+    });
+  }
+}
 
 export class HlsSession extends StreamSession {
   #outPath: string;
@@ -21,8 +44,7 @@ export class HlsSession extends StreamSession {
   constructor(channel: Channel, options: HlsSessionOptions) {
     super(channel, options);
     this.#outPath = resolve(
-      process.cwd(),
-      'streams',
+      options.streamOutputPath,
       `stream_${this.channel.uuid}`,
     );
     this.#streamPath = join(this.#outPath, 'stream.m3u8');

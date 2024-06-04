@@ -9,7 +9,11 @@ import { isNil, isNull } from 'lodash-es';
 import { Mutex } from 'async-mutex';
 import { getEm } from '../dao/dataSource.js';
 import { ConcatSession } from './ConcatSession.js';
-import { HlsSession, HlsSessionOptions } from './HlsSession.js';
+import {
+  HlsSession,
+  HlsSessionFactory,
+  HlsSessionOptions,
+} from './HlsSession.js';
 import { Maybe, Nullable } from '../types/util.js';
 
 class SessionManager {
@@ -74,14 +78,14 @@ class SessionManager {
     channelId: string,
     token: string,
     connection: StreamConnectionDetails,
-    options: Omit<HlsSessionOptions, 'sessionType'>,
+    options: Partial<Omit<HlsSessionOptions, 'sessionType'>> = {},
   ) {
     return this.getOrCreateSession(
       channelId,
       token,
       connection,
       'hls',
-      (channel) => new HlsSession(channel, { ...options, sessionType: 'hls' }),
+      (channel) => HlsSessionFactory.create(channel, options),
     );
   }
 
@@ -94,13 +98,13 @@ class SessionManager {
   ): Promise<Nullable<Session>> {
     const lock = await this.getOrCreateLock(channelId);
     const session = await lock.runExclusive(async () => {
-      const channel = await getEm().findOne(Channel, { uuid: channelId });
-      if (isNil(channel)) {
-        return null;
-      }
-
       let session = this.getSession(channelId, sessionType) as Maybe<Session>;
+
       if (isNil(session)) {
+        const channel = await getEm().findOne(Channel, { uuid: channelId });
+        if (isNil(channel)) {
+          return null;
+        }
         session = sessionFactory(channel);
         this.addSession(channel.uuid, session.sessionType, session);
       }
