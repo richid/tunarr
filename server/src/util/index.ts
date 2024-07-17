@@ -2,28 +2,33 @@ import _, {
   chunk,
   compact,
   concat,
-  flatMap,
   identity,
   isArray,
   isEmpty,
   isError,
   isFunction,
   isNil,
-  isNull,
   isPlainObject,
   isString,
   isUndefined,
   map,
   once,
   range,
+  reduce,
   zipWith,
 } from 'lodash-es';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { format } from 'node:util';
 import { isPromise } from 'node:util/types';
-import { Func } from '../types/func';
 import { Try } from '../types/util';
+
+declare global {
+  interface Array<T> {
+    // async
+    mapAsyncSeq<U>(fn: (item: T) => Promise<U>, ms?: number): Promise<Array<U>>;
+  }
+}
 
 export type IsStringOrNumberValue<T, K extends keyof T> = T[K] extends
   | string
@@ -45,29 +50,27 @@ export function mapToObj<T, U, O extends Record<string | number, U>>(
     .reduce((prev, curr) => ({ ...prev, ...curr }), {} as O);
 }
 
-// Last wins - could add an option, but generally this should
-// only be used when the array is known to be unique
 export function groupByUniq<
   T,
   K extends KeysOfType<T>,
   Key extends IsStringOrNumberValue<T, K>,
 >(data: T[], member: K): Record<Key, T> {
-  const out: Record<Key, T> = {} as Record<Key, T>;
-  for (const t of data) {
-    out[t[member] as Key] = t;
-  }
-  return out;
+  return reduce(
+    data,
+    (prev, t) => ({ ...prev, [t[member] as Key]: t }),
+    {} as Record<Key, T>,
+  );
 }
 
 export function groupByUniqFunc<T, Key extends string | number>(
   data: T[],
   func: (item: T) => Key,
 ): Record<Key, T> {
-  const out: Record<Key, T> = {} as Record<Key, T>;
-  for (const t of data) {
-    out[func(t)] = t;
-  }
-  return out;
+  return reduce(
+    data,
+    (prev, t) => ({ ...prev, [func(t)]: t }),
+    {} as Record<Key, T>,
+  );
 }
 
 export function groupByFunc<T, Key extends string | number | symbol, Value>(
@@ -75,11 +78,11 @@ export function groupByFunc<T, Key extends string | number | symbol, Value>(
   func: (val: T) => Key,
   mapper: (val: T) => Value = identity,
 ): Record<Key, Value> {
-  const out: Record<Key, Value> = {} as Record<Key, Value>;
-  for (const t of data) {
-    out[func(t)] = mapper(t);
-  }
-  return out;
+  return reduce(
+    data,
+    (prev, t) => ({ ...prev, [func(t)]: mapper(t) }),
+    {} as Record<Key, Value>,
+  );
 }
 
 export function groupByUniqAndMap<
@@ -92,11 +95,14 @@ export function groupByUniqAndMap<
   member: K | ((item: T) => K),
   mapper: (val: T) => Value,
 ): Record<Key, Value> {
-  const out: Record<Key, Value> = {} as Record<Key, Value>;
-  for (const t of data) {
-    out[t[isFunction(member) ? member(t) : member] as Key] = mapper(t);
-  }
-  return out;
+  return reduce(
+    data,
+    (prev, t) => ({
+      ...prev,
+      [t[isFunction(member) ? member(t) : member] as Key]: mapper(t),
+    }),
+    {} as Record<Key, Value>,
+  );
 }
 
 // This will fail if any mapping function fails
@@ -145,23 +151,47 @@ export function groupByAndMapAsync<
   );
 }
 
+export async function mapAsyncSeq_old<T, U>(
+  seq: T[] | null | undefined,
+  ms: number | undefined,
+  itemFn: (item: T) => Promise<U>,
+): Promise<U[]> {
+  if (isNil(seq)) {
+    return [];
+  }
+
+  const all = await seq.reduce(
+    async (prev, item) => {
+      const last = await prev;
+
+      const result = await itemFn(item);
+
+      if (ms) {
+        await wait(ms);
+      }
+
+      return [...last, result];
+    },
+    Promise.resolve([] as U[]),
+  );
+
+  return Promise.all(all);
+}
+
 type mapAsyncSeq2Opts = {
   ms?: number;
   parallelism?: number;
   failuresToNull?: boolean;
 };
 
-export async function mapReduceAsyncSeq<T, U, Res = U>(
+export async function mapReduceAsyncSeq<T, U, Res>(
   seq: T[] | null | undefined,
   fn: (item: T) => Promise<U>,
-  reducer: (res: Res, item: U) => Res,
-  empty?: Res,
+  reduce: (res: Res, item: U) => Res,
+  empty: Res,
   opts?: mapAsyncSeq2Opts,
 ): Promise<Res> {
-  return (await mapAsyncSeq(seq, fn, opts)).reduce(
-    reducer,
-    empty ?? ([] as Res),
-  );
+  return (await mapAsyncSeq(seq, fn, opts)).reduce(reduce, empty);
 }
 
 export async function mapAsyncSeq<T, U>(
@@ -235,18 +265,12 @@ export function firstDefined(obj: object, ...args: string[]): string {
   return 'missing';
 }
 
-type NativeFuncOrApply<In, Out> = ((input: In) => Out) | Func<In, Out>;
-
-export async function asyncFlow<T>(
-  ops: NativeFuncOrApply<T, Promise<T>>[],
-  initial: T,
-): Promise<T> {
-  let res: T = initial;
-  for (const op of ops) {
-    res = await (isFunction(op) ? op(res) : op.apply(res));
-  }
-  return res;
-}
+Array.prototype.mapAsyncSeq = async function <T, U>(
+  itemFn: (item: T) => Promise<U>,
+  ms: number | undefined,
+) {
+  return mapAsyncSeq_old(this as T[], ms, itemFn);
+};
 
 export function time<T>(
   key: string,
@@ -429,25 +453,8 @@ export const zipWithIndex = <T>(
   return zipWith(seq, range(start, seq.length), (s, i) => [s, i]);
 };
 
-export function scale(
-  coll: readonly number[] | null | undefined,
-  factor: number,
-): number[] {
-  return map(coll, (c) => c * factor);
-}
-
 export function run<T>(f: () => T): T {
   return f();
-}
-
-// If makeLast == true, value will be inserted on a one-element array
-// If makeLast == false, value will only be inserted in between 2 array values
-export function intersperse<T>(
-  arr: T[],
-  v: T[],
-  makeLast: boolean = false,
-): T[] {
-  return flatMap(arr, (x, i) => (i === 0 && !makeLast ? [x] : [x, ...v]));
 }
 
 export function isSuccess<T>(x: Try<T>): x is T {
@@ -456,11 +463,4 @@ export function isSuccess<T>(x: Try<T>): x is T {
 
 export function isDefined<T>(x: T | undefined): x is T {
   return !isUndefined(x);
-}
-
-export function nullToUndefined<T>(x: T | null | undefined): T | undefined {
-  if (isNull(x)) {
-    return undefined;
-  }
-  return x;
 }

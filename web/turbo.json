@@ -1,19 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
-  "tasks": {
+  "pipeline": {
     "build-dev": {
       "dependsOn": ["^build"]
     },
     "clean-build": {
       "dependsOn": ["^build"]
     },
+    "bundle": {
+      "dependsOn": ["^bundle", "@tunarr/server#typecheck"]
+    },
     "typecheck": {
       "dependsOn": ["^build"]
-    },
-    "bundle": {
-      "dependsOn": ["^bundle"],
-      "outputs": ["dist/**"]
     }
   }
 }

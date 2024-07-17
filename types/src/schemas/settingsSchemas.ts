@@ -84,7 +84,7 @@ export const FfmpegSettingsSchema = z.object({
       z.literal('yadif=1'),
     ])
     .default('none'),
-  disableChannelOverlay: z.boolean().default(false),
+  disableChannelOverlay: z.boolean().default(true),
   disableChannelPrelude: z.boolean().default(false),
 });
 

@@ -84,13 +84,8 @@ export class ProgramExternalId extends BaseEntity {
       };
     }
 
+    console.log('toExternalId fail', this);
     return;
-  }
-
-  toExternalIdString(): string {
-    return `${this.sourceType.toString()}|${this.externalSourceId ?? ''}|${
-      this.externalKey
-    }`;
   }
 
   toKnexInsertData() {

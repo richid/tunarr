@@ -6,21 +6,18 @@ import { ChannelIconSchema } from './utilSchemas.js';
 export const WatermarkSchema = z.object({
   url: z.string().optional(),
   enabled: z.boolean(),
-  position: z
-    .union([
-      z.literal('top-left'),
-      z.literal('top-right'),
-      z.literal('bottom-left'),
-      z.literal('bottom-right'),
-    ])
-    .default('bottom-right'),
-  width: z.number().positive(),
-  verticalMargin: z.number().min(0).max(100),
-  horizontalMargin: z.number().min(0).max(100),
-  duration: z.number().min(0).default(0),
+  position: z.union([
+    z.literal('top-left'),
+    z.literal('top-right'),
+    z.literal('bottom-left'),
+    z.literal('bottom-right'),
+  ]),
+  width: z.number(),
+  verticalMargin: z.number(),
+  horizontalMargin: z.number(),
+  duration: z.number(),
   fixedSize: z.boolean().optional(),
   animated: z.boolean().optional(),
-  opacity: z.number().min(0).max(100).int().optional().catch(100).default(100),
 });
 
 export const FillerCollectionSchema = z.object({
@@ -59,10 +56,6 @@ export const ChannelSchema = z.object({
   stealth: z.boolean(),
   transcoding: ChannelTranscodingOptionsSchema.optional(),
   watermark: WatermarkSchema.optional(),
-  onDemand: z.object({
-    enabled: z.boolean(),
-  }),
-  programCount: z.number(),
 });
 
 function addOrTransform<T extends ZodTypeAny>(x: T) {
@@ -78,15 +71,10 @@ function addOrTransform<T extends ZodTypeAny>(x: T) {
 export const SaveChannelRequestSchema = ChannelSchema.omit({
   programs: true,
   fallback: true, // Figure out how to update this
-  programCount: true,
-})
-  .partial({
-    onDemand: true,
-  })
-  .extend({
-    transcoding: ChannelTranscodingOptionsSchema.extend({
-      targetResolution: addOrTransform(ResolutionSchema.optional()),
-      videoBitrate: addOrTransform(z.number().optional()),
-      videoBufferSize: addOrTransform(z.number().optional()),
-    }),
-  });
+}).extend({
+  transcoding: ChannelTranscodingOptionsSchema.extend({
+    targetResolution: addOrTransform(ResolutionSchema.optional()),
+    videoBitrate: addOrTransform(z.number().optional()),
+    videoBufferSize: addOrTransform(z.number().optional()),
+  }),
+});

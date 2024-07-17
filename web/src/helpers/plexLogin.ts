@@ -108,18 +108,14 @@ export const checkNewPlexServers =
       );
 
       for (const connection of [...localConnections, ...remoteConnections]) {
-        const { healthy } = await apiClient.getUnknownPlexServerStatus({
+        const { status } = await apiClient.getPlexBackendStatus({
           name: server.name,
           accessToken: server.accessToken,
           uri: connection.uri,
         });
 
-        if (healthy) {
+        if (status === 1) {
           return { server, connection };
-        } else {
-          console.warn(
-            `Unable to reach Plex server "${server.name}" via ${connection.uri}`,
-          );
         }
       }
     }).then(compact);

@@ -1,16 +1,9 @@
-import {
-  UseMutationOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { Channel, SaveChannelRequest } from '@tunarr/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { SaveChannelRequest } from '@tunarr/types';
 import { ZodiosError } from '@zodios/core';
 import { useTunarrApi } from './useTunarrApi';
 
-export const useUpdateChannel = (
-  isNewChannel: boolean,
-  opts?: UseMutationOptions<Channel, Error, SaveChannelRequest>,
-) => {
+export const useUpdateChannel = (isNewChannel: boolean) => {
   const queryClient = useQueryClient();
   const apiClient = useTunarrApi();
 
@@ -25,30 +18,21 @@ export const useUpdateChannel = (
         });
       }
     },
-    onSuccess: async (...args) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         exact: false,
         queryKey: ['channels'],
       });
-
       if (!isNewChannel) {
         updateChannel.reset();
       }
-
-      if (opts?.onSuccess) {
-        opts?.onSuccess(...args);
-      }
     },
-    onError: (error, vars, ctx) => {
+    onError: (error) => {
       if (error instanceof ZodiosError) {
         console.error(error.data);
         console.error(error, error.cause, error.message);
       } else {
         console.error(error);
-      }
-
-      if (opts?.onError) {
-        opts?.onError(error, vars, ctx);
       }
     },
   });

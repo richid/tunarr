@@ -1,4 +1,3 @@
-import { useChannelEditor } from '@/store/selectors';
 import { ArrowBack, Autorenew, Delete } from '@mui/icons-material';
 import Add from '@mui/icons-material/Add';
 import {
@@ -20,7 +19,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Link as RouterLink } from '@tanstack/react-router';
 import { scheduleRandomSlots } from '@tunarr/shared';
 import { ChannelProgram, isContentProgram } from '@tunarr/types';
 import {
@@ -58,6 +56,7 @@ import {
   useForm,
   useWatch,
 } from 'react-hook-form';
+import { Link as RouterLink } from 'react-router-dom';
 import { useDebounceCallback } from 'usehooks-ts';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import PaddedPaper from '../../components/base/PaddedPaper';
@@ -70,6 +69,7 @@ import {
   padOptions,
 } from '../../components/slot_scheduler/commonSlotSchedulerOptions';
 import { handleNumericFormValue, zipWithIndex } from '../../helpers/util';
+import { usePreloadedChannelEdit } from '../../hooks/usePreloadedChannel';
 import { useUpdateLineup } from '../../hooks/useUpdateLineup';
 import {
   resetLineup,
@@ -553,7 +553,7 @@ export default function RandomSlotEditorPage() {
     currentEntity: channel,
     programList: newLineup,
     schedule: loadedSchedule,
-  } = useChannelEditor();
+  } = usePreloadedChannelEdit();
 
   const updateLineupMutation = useUpdateLineup();
   const snackbar = useSnackbar();
@@ -870,6 +870,7 @@ export default function RandomSlotEditorPage() {
           <Button
             variant="outlined"
             to=".."
+            relative="path"
             component={RouterLink}
             startIcon={<ArrowBack />}
             sx={{ justifyContent: 'flex-start' }}

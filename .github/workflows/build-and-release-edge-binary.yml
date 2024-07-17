@@ -1,4 +1,4 @@
-name: Build & Publish Binaries
+name: Build Edge Binaries
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - name: macos-13
+          - name: macos-latest
             target_name: macos
           - name: ubuntu-latest
             target_name: linux

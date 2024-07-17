@@ -3,24 +3,20 @@ import { DefaultPlexHeaders } from '@tunarr/shared/constants';
 import { PlexServerSettings } from '@tunarr/types';
 import axios from 'axios';
 
-export const usePlexServerStatus = ({
-  uri,
-  accessToken,
-}: Pick<PlexServerSettings, 'uri' | 'accessToken'>) => {
+export const usePlexServerStatus = (server: PlexServerSettings) => {
   return useQuery({
-    queryKey: ['plex-servers', { uri, accessToken }, 'status-local'],
+    queryKey: ['plex-servers', server.id, 'status-local'],
     queryFn: async () => {
       try {
-        await axios.get(`${uri}`, {
+        await axios.get(`${server.uri}`, {
           headers: {
             ...DefaultPlexHeaders,
-            'X-Plex-Token': accessToken,
+            'X-Plex-Token': server.accessToken,
           },
           timeout: 30 * 1000,
         });
         return true;
       } catch (e) {
-        console.error('Error querying Plex from frontend', e);
         return false;
       }
     },

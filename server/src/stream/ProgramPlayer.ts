@@ -31,7 +31,6 @@ import { Player, PlayerContext } from './Player.js';
 import { PlexPlayer } from './plex/PlexPlayer.js';
 import { StreamContextChannel } from './types.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { serverOptions } from '../globals.js';
 
 export class ProgramPlayer extends Player {
   private logger = LoggerFactory.child({ caller: import.meta });
@@ -180,13 +179,19 @@ export class ProgramPlayer extends Player {
       } else if (isNonEmptyString(channel.icon?.path)) {
         icon = channel.icon.path;
       } else {
-        icon = `http://localhost:${serverOptions().port}/images/tunarr.png`;
+        return;
       }
 
       return {
-        ...watermark,
         enabled: true,
         url: icon,
+        width: watermark.width,
+        verticalMargin: watermark.verticalMargin,
+        horizontalMargin: watermark.horizontalMargin,
+        duration: watermark.duration,
+        position: watermark.position,
+        fixedSize: watermark.fixedSize === true,
+        animated: watermark.animated === true,
       };
     }
 

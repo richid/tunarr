@@ -1,5 +1,6 @@
 import { Loaded } from '@mikro-orm/core';
 import { DynamicContentConfigSource } from '@tunarr/types/api';
+import { isUndefined } from 'lodash-es';
 import filter from 'lodash-es/filter';
 import { ChannelDB } from '../dao/channelDb';
 import { Channel } from '../dao/entities/Channel';
@@ -29,10 +30,12 @@ export class ScheduleDynamicChannelsTask extends Task<void> {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   protected async runInternal(): Promise<Maybe<void>> {
-    const lineups = await this.#channelsDb.loadAllLineupConfigs();
+    const lineups = await this.#channelsDb.loadAllLineups();
     const dynamicLineups = filter(
       lineups,
-      ({ lineup }) => lineup.dynamicContentConfig?.enabled === true,
+      ({ lineup }) =>
+        !isUndefined(lineup.dynamicContentConfig) &&
+        lineup.dynamicContentConfig.enabled,
     );
 
     for (const { channel, lineup } of dynamicLineups) {

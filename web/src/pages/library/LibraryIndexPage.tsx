@@ -7,7 +7,7 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
-import { Link } from '@tanstack/react-router';
+import { Link } from 'react-router-dom';
 
 export default function LibraryIndexPage() {
   return (

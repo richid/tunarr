@@ -73,7 +73,7 @@ export default function SelectedProgrammingList({
     JSX.Element,
     [ListChildComponentProps]
   >({
-    plex: (selected, { style }) => {
+    plex: (selected, { index, style }) => {
       const media = knownMedia[selected.server][selected.guid];
 
       let title: string = media.title;
@@ -106,7 +106,7 @@ export default function SelectedProgrammingList({
 
       return (
         <ListItem
-          divider
+          divider={index !== 0}
           sx={{ px: 1 }}
           dense
           key={selected.guid}

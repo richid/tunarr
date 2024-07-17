@@ -45,11 +45,7 @@ type VideoStreamResult = VideoStreamSuccessResult | VideoStreamErrorResult;
  */
 export class VideoStream {
   private logger = LoggerFactory.child({ caller: import.meta });
-  private calculator: StreamProgramCalculator;
-
-  constructor() {
-    this.calculator = getServerContext().streamProgramCalculator();
-  }
+  private calculator = new StreamProgramCalculator();
 
   async startStream(
     req: StreamQueryString,
@@ -91,6 +87,16 @@ export class VideoStream {
       };
     }
 
+    let isLoading = false;
+    if (req.first === 0) {
+      isLoading = true;
+    }
+
+    let isFirst = false;
+    if (req.first === 1) {
+      isFirst = true;
+    }
+
     const ffmpegSettings = serverCtx.settings.ffmpegSettings();
 
     // Check if ffmpeg path is valid
@@ -107,6 +113,24 @@ export class VideoStream {
     }
 
     let lineupItem: Maybe<StreamLineupItem>;
+    if (isLoading) {
+      // Skip looking up program if we're doing the first loading screen
+      // Insert 40ms of loading time in front of the stream (let's look into this one later)
+      lineupItem = {
+        type: 'loading',
+        streamDuration: 40,
+        duration: 40,
+        start: 0,
+      };
+    } else {
+      // Actually try and find a program
+      // Get video lineup (array of video urls with calculated start times and durations.)
+      // lineupItem = serverCtx.channelCache.getCurrentLineupItem(
+      //   channel.uuid,
+      //   startTimestamp,
+      // );
+    }
+
     let currentProgram: ProgramAndTimeElapsed | undefined;
     let channelContext: Loaded<Channel> = channel;
     const redirectChannels: string[] = [];
@@ -235,10 +259,11 @@ export class VideoStream {
       lineupItem = await this.calculator.createLineupItem(
         currentProgram,
         channelContext,
+        isFirst,
       );
     }
 
-    if (!isUndefined(lineupItem)) {
+    if (!isLoading && !isUndefined(lineupItem)) {
       let upperBound = Number.MAX_SAFE_INTEGER;
       const beginningOffset = lineupItem?.beginningOffset ?? 0;
 
@@ -289,11 +314,13 @@ export class VideoStream {
       .filter((s) => s.length > 0)
       .forEach((line) => this.logger.info(line));
 
-    await serverCtx.channelCache.recordPlayback(
-      channel.uuid,
-      startTimestamp,
-      lineupItem,
-    );
+    if (!isLoading) {
+      await serverCtx.channelCache.recordPlayback(
+        channel.uuid,
+        startTimestamp,
+        lineupItem,
+      );
+    }
 
     if (wereThereTooManyAttempts(session, lineupItem)) {
       lineupItem = {

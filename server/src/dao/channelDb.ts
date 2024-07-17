@@ -6,15 +6,13 @@ import {
   wrap,
 } from '@mikro-orm/core';
 import { scheduleRandomSlots, scheduleTimeSlots } from '@tunarr/shared';
-import { forProgramType, seq } from '@tunarr/shared/util';
+import { forProgramType } from '@tunarr/shared/util';
 import {
   ChannelProgram,
   ChannelProgramming,
   CondensedChannelProgram,
   CondensedChannelProgramming,
-  ContentProgram,
   SaveChannelRequest,
-  tag,
 } from '@tunarr/types';
 import { UpdateChannelProgrammingRequest } from '@tunarr/types/api';
 import dayjs from 'dayjs';
@@ -24,14 +22,11 @@ import ld, {
   compact,
   filter,
   find,
-  forEach,
   groupBy,
   isEmpty,
   isNil,
   isNull,
   isNumber,
-  isString,
-  isUndefined,
   map,
   nth,
   omitBy,
@@ -40,16 +35,10 @@ import ld, {
   reject,
   sumBy,
   take,
-  uniqBy,
 } from 'lodash-es';
 import { Low } from 'lowdb';
 import fs from 'node:fs/promises';
 import { join } from 'path';
-import { MarkRequired } from 'ts-essentials';
-import {
-  Channel as RawChannel,
-  ChannelWithPrograms as RawChannelWithPrograms,
-} from '../dao/direct/derivedTypes.js';
 import { globalOptions } from '../globals.js';
 import { typedProperty } from '../types/path.js';
 import { asyncPool } from '../util/asyncPool.js';
@@ -57,14 +46,11 @@ import { fileExists } from '../util/fsUtil.js';
 import {
   groupByFunc,
   groupByUniq,
-  isDefined,
+  groupByUniqAndMapAsync,
   mapAsyncSeq,
   mapReduceAsyncSeq,
-  run,
 } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { MutexMap } from '../util/mutexMap.js';
-import { Timer, timeNamedAsync } from '../util/perf.js';
 import { SchemaBackedDbAdapter } from './SchemaBackedDbAdapter.js';
 import { ProgramConverter } from './converters/programConverters.js';
 import { getEm } from './dataSource.js';
@@ -72,25 +58,12 @@ import {
   Lineup,
   LineupItem,
   LineupSchema,
-  PendingProgram,
   isContentItem,
   isOfflineItem,
   isRedirectItem,
 } from './derived_types/Lineup.js';
-import { directDbAccess } from './direct/directDbAccess.js';
-import {
-  MinimalProgramGroupingFields,
-  withFallbackPrograms,
-  withPrograms,
-  withTrackAlbum,
-  withTrackArtist,
-  withTvSeason,
-  withTvShow,
-} from './direct/programQueryHelpers.js';
 import { Channel, ChannelTranscodingSettings } from './entities/Channel.js';
-import { ChannelFillerShow } from './entities/ChannelFillerShow.js';
 import { CustomShowContent } from './entities/CustomShowContent.js';
-import { FillerShow, FillerShowId } from './entities/FillerShow.js';
 import { Program } from './entities/Program.js';
 import { upsertContentPrograms } from './programHelpers.js';
 
@@ -183,100 +156,24 @@ export type LoadedChannelWithGroupRefs = Loaded<
 
 // Let's see if this works... in so we can have many ChannelDb objects flying around.
 const fileDbCache: Record<string | number, Low<Lineup>> = {};
-const fileDbLocks = new MutexMap();
 
 export class ChannelDB {
   private logger = LoggerFactory.child({ caller: import.meta });
-  private timer = new Timer(this.logger);
   #programConverter = new ProgramConverter();
-
-  async channelExists(channelId: string) {
-    const channel = await directDbAccess()
-      .selectFrom('channel')
-      .where('channel.uuid', '=', channelId)
-      .select('uuid')
-      .executeTakeFirst();
-    return !isNil(channel);
-  }
 
   getChannelByNumber(channelNumber: number) {
     return getEm().repo(Channel).findOne({ number: channelNumber });
-  }
-
-  async channelIdForNumber(channelNumber: number) {
-    const result = await directDbAccess()
-      .selectFrom('channel')
-      .where('number', '=', channelNumber)
-      .select('uuid')
-      .executeTakeFirst();
-    return result?.uuid;
   }
 
   getChannelById(id: string) {
     return getEm().repo(Channel).findOne({ uuid: id });
   }
 
-  getChannelDirect(id: string) {
-    return directDbAccess()
-      .selectFrom('channel')
-      .where('channel.uuid', '=', id)
-      .selectAll()
-      .executeTakeFirst();
-  }
-
   getChannel(id: string | number) {
     return isNumber(id) ? this.getChannelByNumber(id) : this.getChannelById(id);
   }
 
-  getChannelAndPrograms(
-    uuid: string,
-  ): Promise<RawChannelWithPrograms | undefined> {
-    return directDbAccess()
-      .selectFrom('channel')
-      .selectAll(['channel'])
-      .where('channel.uuid', '=', uuid)
-      .innerJoin(
-        'channelPrograms',
-        'channel.uuid',
-        'channelPrograms.channelUuid',
-      )
-      .select((eb) => withPrograms(eb, { joins: { customShows: true } }))
-      .groupBy('channel.uuid')
-      .orderBy('channel.number asc')
-      .executeTakeFirst();
-  }
-
-  getChannelProgramExternalIds(uuid: string) {
-    return directDbAccess()
-      .selectFrom('channelPrograms')
-      .where('channelUuid', '=', uuid)
-      .innerJoin(
-        'programExternalId',
-        'channelPrograms.programUuid',
-        'programExternalId.programUuid',
-      )
-      .selectAll('programExternalId')
-      .execute();
-  }
-
-  async getChannelFallbackPrograms(uuid: string) {
-    const result = await directDbAccess()
-      .selectFrom('channelFallback')
-      .where('channelFallback.channelUuid', '=', uuid)
-      .select(withFallbackPrograms)
-      .groupBy('channelFallback.channelUuid')
-      .executeTakeFirst();
-    return result?.programs ?? [];
-  }
-
-  /**
-   * The old implementation using the ORM, which is super slow for
-   * huge channels. This WILL be removed, but we're keeping it around
-   * so that we can ship the perf improvements now without changing the
-   * whole world.
-   * @deprecated
-   */
-  getChannelAndProgramsSLOW(uuid: string) {
+  getChannelAndPrograms(uuid: string) {
     return getEm()
       .repo(Channel)
       .findOne(
@@ -300,22 +197,12 @@ export class ChannelDB {
       );
     }
 
-    const channel = em.create(Channel, createRequestToChannel(createReq));
+    const channel = new Channel();
+    wrap(channel).assign(createRequestToChannel(createReq), { em });
     em.persist(channel);
-
     await this.createLineup(channel.uuid);
-    if (isDefined(createReq.onDemand) && createReq.onDemand.enabled) {
-      const db = await this.getFileDb(channel.uuid);
-      await db.update((lineup) => {
-        lineup.onDemandConfig = {
-          state: 'paused',
-          cursor: 0,
-        };
-      });
-    }
-
     await em.flush();
-    return { channel, lineup: (await this.getFileDb(channel.uuid)).data };
+    return channel.uuid;
   }
 
   async updateChannel(id: string, updateReq: SaveChannelRequest) {
@@ -324,68 +211,11 @@ export class ChannelDB {
     const update = updateRequestToChannel(updateReq);
     const loadedChannel = wrap(channel).assign(update, {
       merge: true,
+      // convertCustomTypes: true,
       onlyProperties: true,
     });
-
-    if (isDefined(updateReq.fillerCollections))
-      [
-        await em.transactional(async (em) => {
-          await em.repo(ChannelFillerShow).nativeDelete({
-            channel: { uuid: id },
-          });
-
-          const channelFillerShows = map(
-            updateReq.fillerCollections,
-            (filler) => {
-              return em.create(ChannelFillerShow, {
-                cooldown: filler.cooldownSeconds,
-                channel: em.getReference(Channel, id),
-                fillerShow: em.getReference(
-                  FillerShow,
-                  tag<FillerShowId>(filler.id),
-                ),
-                weight: filler.weight,
-              });
-            },
-          );
-
-          await em.insertMany(ChannelFillerShow, channelFillerShows);
-        }),
-      ];
-
-    if (isDefined(updateReq.onDemand)) {
-      const db = await this.getFileDb(id);
-      await db.update((lineup) => {
-        if (updateReq.onDemand?.enabled ?? false) {
-          lineup.onDemandConfig = {
-            state: 'paused',
-            cursor: 0,
-          };
-        } else {
-          delete lineup['onDemandConfig'];
-        }
-      });
-    }
-
     await em.flush();
-
-    return {
-      channel: loadedChannel,
-      lineup: await this.loadLineup(id),
-    };
-  }
-
-  async updateChannelStartTime(id: string, newTime: number) {
-    const ts = dayjs(newTime);
-    return getEm().nativeUpdate(
-      Channel,
-      {
-        uuid: id,
-      },
-      {
-        startTime: ts.unix() * 1000,
-      },
-    );
+    return loadedChannel;
   }
 
   async deleteChannel(
@@ -440,40 +270,28 @@ export class ChannelDB {
     return getEm().repo(Channel).findAll({ orderBy });
   }
 
-  async getAllChannelsAndPrograms(): Promise<RawChannelWithPrograms[]> {
-    return await directDbAccess()
-      .selectFrom('channel')
-      .selectAll(['channel'])
-      .leftJoin(
-        'channelPrograms',
-        'channelPrograms.channelUuid',
-        'channel.uuid',
-      )
-      .select((eb) => [
-        withPrograms(eb, {
-          joins: {
-            trackAlbum: MinimalProgramGroupingFields,
-            trackArtist: MinimalProgramGroupingFields,
-            tvShow: MinimalProgramGroupingFields,
-            tvSeason: MinimalProgramGroupingFields,
-          },
-        }),
-      ])
-      .groupBy('channel.uuid')
-      .orderBy('channel.number asc')
-      .execute();
+  async getAllChannelsAndPrograms(): Promise<LoadedChannelWithGroupRefs[]> {
+    return getEm()
+      .repo(Channel)
+      .findAll({
+        populate: [
+          'programs',
+          'programs.artist',
+          'programs.album',
+          'programs.tvShow',
+          'programs.season',
+        ],
+      });
   }
 
   async updateLineup(id: string, req: UpdateChannelProgrammingRequest) {
-    const em = getEm();
-    const channel = await em.findOne(Channel, id, {
-      populate: ['programs:ref'],
-    });
-    const lineup = await this.loadLineup(id);
+    const channel = await this.getChannelAndPrograms(id);
 
     if (isNil(channel)) {
       return null;
     }
+
+    const em = getEm();
 
     const updateChannel = async (
       lineup: readonly LineupItem[],
@@ -540,7 +358,7 @@ export class ChannelDB {
       programs: ChannelProgram[],
       lineup: ChannelProgram[] = programs,
     ) => {
-      const upsertedPrograms = await upsertContentPrograms(programs, 50);
+      const upsertedPrograms = await upsertContentPrograms(programs);
       const dbIdByUniqueId = groupByFunc(
         upsertedPrograms,
         (p) => p.uniqueId(),
@@ -551,7 +369,7 @@ export class ChannelDB {
 
     if (req.type === 'manual') {
       const programs = req.programs;
-      const lineupItems = compact(
+      const lineup = compact(
         map(req.lineup, ({ index, duration }) => {
           const program = nth(programs, index);
           if (program) {
@@ -564,28 +382,18 @@ export class ChannelDB {
         }),
       );
 
-      const newLineupItems = await this.timer.timeAsync('createNewLineup', () =>
-        createNewLineup(programs, lineupItems),
+      const newLineup = await createNewLineup(programs, lineup);
+      const updatedChannel = await updateChannel(
+        newLineup,
+        dayjs().unix() * 1000,
       );
-      const updatedChannel = await this.timer.timeAsync('updateChannel', () =>
-        updateChannel(newLineupItems, dayjs().unix() * 1000),
-      );
-
-      await this.timer.timeAsync('saveLineup', () =>
-        this.saveLineup(id, {
-          items: newLineupItems,
-          onDemandConfig: isDefined(lineup.onDemandConfig)
-            ? {
-                ...lineup.onDemandConfig,
-                cursor: 0,
-              }
-            : undefined,
-        }),
-      );
+      await this.saveLineup(id, {
+        items: newLineup,
+      });
 
       return {
         channel: updatedChannel,
-        newLineup: newLineupItems,
+        newLineup,
       };
     } else if (req.type === 'time' || req.type === 'random') {
       // const programs = req.body.programs;
@@ -621,81 +429,6 @@ export class ChannelDB {
     return null;
   }
 
-  /**
-   * Like {@link ChannelDB#saveLineup} but only allows updating config-based information in the lineup
-   */
-  async updateLineupConfig<
-    Key extends keyof Omit<
-      Lineup,
-      'items' | 'startTimeOffsets' | 'pendingPrograms'
-    >,
-  >(id: string, key: Key, conf: Lineup[Key]) {
-    const lineupDb = await this.getFileDb(id);
-    return await lineupDb.update((existing) => {
-      existing[key] = conf;
-    });
-  }
-
-  async setChannelPrograms(
-    channel: Loaded<Channel>,
-    lineup: readonly LineupItem[],
-  ): Promise<Loaded<Channel> | null>;
-  async setChannelPrograms(
-    channel: string | Loaded<Channel>,
-    lineup: readonly LineupItem[],
-    startTime?: number,
-  ): Promise<Loaded<Channel> | null> {
-    const loadedChannel = await run(async () => {
-      if (isString(channel)) {
-        return await this.getChannelById(channel);
-      } else {
-        return channel;
-      }
-    });
-
-    if (isNull(loadedChannel)) {
-      return null;
-    }
-
-    return await getEm().transactional(async (em) => {
-      if (!isUndefined(startTime)) {
-        loadedChannel.startTime = startTime;
-      }
-      loadedChannel.duration = sumBy(lineup, typedProperty('durationMs'));
-
-      const allIds = ld
-        .chain(lineup)
-        .filter(isContentItem)
-        .map((p) => p.id)
-        .uniq()
-        .value();
-      loadedChannel.programs.removeAll();
-      await em.persistAndFlush(loadedChannel);
-      const refs = allIds.map((id) => em.getReference(Program, id));
-      loadedChannel.programs.set(refs);
-      await em.persistAndFlush(loadedChannel);
-      return loadedChannel;
-    });
-  }
-
-  async addPendingPrograms(
-    channelId: string,
-    pendingPrograms: PendingProgram[],
-  ) {
-    if (pendingPrograms.length === 0) {
-      return;
-    }
-
-    const db = await this.getFileDb(channelId);
-    return await db.update((data) => {
-      if (isUndefined(data.pendingPrograms)) {
-        data.pendingPrograms = [...pendingPrograms];
-      } else {
-        data.pendingPrograms.push(...pendingPrograms);
-      }
-    });
-  }
-
   async loadAllLineups() {
     return mapReduceAsyncSeq(
       await this.getAllChannelsAndPrograms(),
@@ -709,24 +442,10 @@ export class ChannelDB {
         ...prev,
         [channel.uuid]: { channel, lineup },
       }),
-      {} as Record<string, { channel: RawChannelWithPrograms; lineup: Lineup }>,
-    );
-  }
-
-  async loadAllLineupConfigs(forceRead: boolean = false) {
-    return mapReduceAsyncSeq(
-      await this.getAllChannels(),
-      async (channel) => {
-        return {
-          channel,
-          lineup: await this.loadLineup(channel.uuid, forceRead),
-        };
-      },
-      (prev, { channel, lineup }) => ({
-        ...prev,
-        [channel.uuid]: { channel, lineup },
-      }),
-      {} as Record<string, { channel: Loaded<Channel>; lineup: Lineup }>,
+      {} as Record<
+        string,
+        { channel: LoadedChannelWithGroupRefs; lineup: Lineup }
+      >,
     );
   }
 
@@ -742,8 +461,9 @@ export class ChannelDB {
     };
   }
 
-  async loadLineup(channelId: string, forceRead: boolean = false) {
-    const db = await this.getFileDb(channelId, forceRead);
+  async loadLineup(channelId: string) {
+    const db = await this.getFileDb(channelId);
+    await db.read();
     return db.data;
   }
 
@@ -782,10 +502,33 @@ export class ChannelDB {
     offset: number = 0,
     limit: number = -1,
   ): Promise<CondensedChannelProgramming | null> {
-    const lineup = await timeNamedAsync('loadLineup', this.logger, () =>
-      this.loadLineup(channelId),
-    );
+    // TODO: Don't load all of the programs upfront
+    // We can get away with:
+    // 1. Waiting until we've applied offset/limit to the lineup
+    //    and then only load what we need AND
+    // 2. Loading these incrementally as we materialize so we don't
+    //    potentially pull a ton of crap into memory at once
+    const channel = await getEm()
+      .repo(Channel)
+      .findOne(
+        { uuid: channelId },
+        {
+          populate: [
+            'programs',
+            'programs.customShows.uuid',
+            'programs.tvShow',
+            'programs.season',
+            'programs.album',
+            'programs.artist',
+            'programs.externalIds',
+          ],
+        },
+      );
+    if (isNil(channel)) {
+      return null;
+    }
 
+    const lineup = await this.loadLineup(channelId);
     const len = lineup.items.length;
     const cleanOffset = offset < 0 ? 0 : offset;
     const cleanLimit = limit < 0 ? len : limit;
@@ -795,71 +538,20 @@ export class ChannelDB {
       .take(cleanLimit)
       .value();
 
-    const channel = await timeNamedAsync('select channel', this.logger, () =>
-      getEm().repo(Channel).findOne({ uuid: channelId }),
-    );
-
-    if (isNil(channel)) {
-      return null;
-    }
-
-    const contentItems = filter(pagedLineup, isContentItem);
-
-    const directPrograms = await this.timer.timeAsync('direct', () =>
-      directDbAccess()
-        .selectFrom('channelPrograms')
-        .where('channelUuid', '=', channelId)
-        .innerJoin('program', 'channelPrograms.programUuid', 'program.uuid')
-        .selectAll('program')
-        .select((eb) => [
-          withTvShow(eb),
-          withTvSeason(eb),
-          withTrackAlbum(eb),
-          withTrackArtist(eb),
-        ])
-        .execute(),
-    );
-
-    const externalIds = await this.timer.timeAsync('eids', () =>
-      this.getChannelProgramExternalIds(channelId),
-    );
-
-    const externalIdsByProgramId = groupBy(
-      externalIds,
-      (eid) => eid.programUuid,
-    );
-
-    const programsById = groupByUniq(directPrograms, 'uuid');
-
-    const materializedPrograms = this.timer.timeSync('program convert', () => {
-      const ret: Record<string, ContentProgram> = {};
-      forEach(uniqBy(contentItems, 'id'), (item) => {
-        const program = programsById[item.id];
+    const materializedPrograms = await groupByUniqAndMapAsync(
+      filter(pagedLineup, isContentItem),
+      'id',
+      async (item) => {
+        const program = channel.programs.find((p) => p.uuid === item.id);
         if (!program) {
-          return;
+          return null;
         }
-
-        const converted =
-          this.#programConverter.directEntityToContentProgramSync(
-            program,
-            externalIdsByProgramId[program.uuid] ?? [],
-          );
-
-        ret[converted.id!] = converted;
-      });
-
-      return ret;
-    });
-
-    const { lineup: condensedLineup, offsets } = await this.timer.timeAsync(
-      'build condensed lineup',
-      () =>
-        this.buildCondensedLineup(
-          channel,
-          new Set([...seq.collect(directPrograms, (p) => p.uuid)]),
-          pagedLineup,
-        ),
+        return this.#programConverter.entityToContentProgram(program);
+      },
     );
+
+    const { lineup: condensedLineup, offsets } =
+      await this.buildCondensedLineup(channel, pagedLineup);
 
     let apiOffsets: number[];
     if (lineup.startTimeOffsets) {
@@ -888,30 +580,21 @@ export class ChannelDB {
     };
   }
 
-  async saveLineup(channelId: string, newLineup: Omit<Lineup, 'lastUpdated'>) {
+  async saveLineup(channelId: string, lineup: Lineup) {
     const db = await this.getFileDb(channelId);
-    if (newLineup.items.length === 0) {
-      newLineup.items.push({
+    if (lineup.items.length === 0) {
+      lineup.items.push({
         type: 'offline',
         durationMs: 1000 * 60 * 60 * 24 * 30,
       });
     }
-    newLineup.startTimeOffsets = reduce(
-      newLineup.items,
+    lineup.startTimeOffsets = reduce(
+      lineup.items,
       (acc, item, index) => [...acc, acc[index] + item.durationMs],
       [0],
     );
-    db.data = {
-      ...db.data,
-      items: newLineup.items,
-      startTimeOffsets: newLineup.startTimeOffsets,
-      schedule: newLineup.schedule,
-      pendingPrograms: newLineup.pendingPrograms,
-      onDemandConfig: newLineup.onDemandConfig,
-      lastUpdated: dayjs().valueOf(),
-    };
-    await db.write();
-    return db.data;
+    db.data = lineup;
+    return await db.write();
   }
 
   async removeProgramsFromLineup(channelId: string, programIds: string[]) {
@@ -939,32 +622,22 @@ export class ChannelDB {
     await db.write();
   }
 
-  private async getFileDb(channelId: string, forceRead: boolean = false) {
-    return await fileDbLocks.getOrCreateLock(channelId).then((lock) =>
-      lock.runExclusive(async () => {
-        const existing = fileDbCache[channelId];
-        if (isDefined(existing)) {
-          if (forceRead) {
-            await existing.read();
-          }
-          return existing;
-        }
-
-        const db = new Low<Lineup>(
-          new SchemaBackedDbAdapter(
-            LineupSchema,
-            join(
-              globalOptions().databaseDirectory,
-              `channel-lineups/${channelId}.json`,
-            ),
+  private async getFileDb(channelId: string) {
+    if (!fileDbCache[channelId]) {
+      fileDbCache[channelId] = new Low<Lineup>(
+        new SchemaBackedDbAdapter(
+          LineupSchema,
+          join(
+            globalOptions().databaseDirectory,
+            `channel-lineups/${channelId}.json`,
           ),
-          { items: [], startTimeOffsets: [], lastUpdated: dayjs().valueOf() },
-        );
-        await db.read();
-        fileDbCache[channelId] = db;
-        return db;
-      }),
-    );
+        ),
+        { items: [], startTimeOffsets: [] },
+      );
+      await fileDbCache[channelId].read();
+    }
+
+    return fileDbCache[channelId];
   }
 
   private async restoreLineupFile(channelId: string) {
@@ -1002,18 +675,17 @@ export class ChannelDB {
   }
 
   private async buildApiLineup(
-    channel: MarkRequired<RawChannel, 'programs'>,
+    channel: Loaded<Channel, 'programs' | 'programs.customShows.uuid'>,
     lineup: LineupItem[],
   ): Promise<{ lineup: ChannelProgram[]; offsets: number[] }> {
-    const allChannels = directDbAccess()
-      .selectFrom('channel')
-      .select(['channel.uuid', 'channel.number', 'channel.name'])
-      .execute();
+    const allChannels = getEm().findAll(Channel, {
+      fields: ['name', 'number'],
+    });
     let lastOffset = 0;
     const offsets: number[] = [];
     const programs = compact(
       await mapAsyncSeq(lineup, async (item) => {
-        const apiItem = this.#programConverter.directLineupItemToChannelProgram(
+        const apiItem = await this.#programConverter.lineupItemToChannelProgram(
           channel,
           item,
           await allChannels,
@@ -1030,39 +702,36 @@ export class ChannelDB {
   }
 
   private async buildCondensedLineup(
-    channel: Loaded<Channel>,
-    dbProgramIds: Set<string>,
+    channel: Loaded<Channel, 'programs' | 'programs.customShows.uuid'>,
     lineup: LineupItem[],
   ): Promise<{ lineup: CondensedChannelProgram[]; offsets: number[] }> {
     let lastOffset = 0;
     const offsets: number[] = [];
 
-    // const gen = asyncPool(
-    //   chunk(programIds, 100),
-    //   async (chunk) => {
-    //     return await getEm()
-    //       .repo(CustomShowContent)
-    //       .findAll({
-    //         where: { content: { $in: chunk } },
-    //       });
-    //   },
-    //   { concurrency: 2 },
-    // );
+    const programIds = channel.programs.map((p) => p.uuid);
+    const gen = asyncPool(
+      chunk(programIds, 100),
+      async (chunk) => {
+        return await getEm()
+          .repo(CustomShowContent)
+          .findAll({
+            where: { content: { $in: chunk } },
+          });
+      },
+      { concurrency: 2 },
+    );
 
     const allCustomShowContent: CustomShowContent[] = [];
-    // const start = performance.now();
-    // for await (const selectedChunkResult of gen) {
-    //   if (selectedChunkResult.type === 'success') {
-    //     allCustomShowContent.push(...selectedChunkResult.result);
-    //   } else {
-    //     this.logger.warn(
-    //       selectedChunkResult.error,
-    //       'Error while selecting custom show content',
-    //     );
-    //   }
-    // }
-    // const end = performance.now();
-    // this.logger.debug('Custom show select %d ms', end - start);
+    for await (const selectedChunkResult of gen) {
+      if (selectedChunkResult.type === 'success') {
+        allCustomShowContent.push(...selectedChunkResult.result);
+      } else {
+        this.logger.warn(
+          selectedChunkResult.error,
+          'Error while selecting custom show content',
+        );
+      }
+    }
 
     const customShowContent = groupBy(
       allCustomShowContent,
@@ -1074,7 +743,6 @@ export class ChannelDB {
       .findAll({
         fields: ['name', 'number'],
       });
-
     const channelsById = groupByUniq(allChannels, 'uuid');
 
     const programs = ld
@@ -1105,16 +773,18 @@ export class ChannelDB {
             customShowContent[item.customShowId],
             (csc) => csc.content.uuid === item.id,
           );
-          p = {
-            persisted: true,
-            type: 'custom',
-            customShowId: item.customShowId,
-            duration: item.durationMs,
-            index: csc?.index ?? -1, // TODO: We need a faster way to find this
-            id: item.id,
-          };
+          if (csc) {
+            p = {
+              persisted: true,
+              type: 'custom',
+              customShowId: item.customShowId,
+              duration: item.durationMs,
+              index: csc.index,
+              id: item.id,
+            };
+          }
         } else {
-          if (dbProgramIds.has(item.id)) {
+          if (channel.programs.exists((p) => p.uuid === item.id)) {
             p = {
               persisted: true,
               type: 'content',
@@ -1158,7 +828,6 @@ export class ChannelDB {
         if (changed) {
           return this.saveLineup(channel.uuid, { ...lineup, items: newLineup });
         }
-        return;
       },
       { concurrency: 2 },
     );

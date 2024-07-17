@@ -1,18 +1,37 @@
+import { Box, Paper, Tab, Tabs, Typography } from '@mui/material';
+import { isNil } from 'lodash-es';
 import {
-  Box,
-  LinearProgress,
-  Paper,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
-import { Link, Outlet, useMatches } from '@tanstack/react-router';
-import { last } from 'lodash-es';
-import { Suspense } from 'react';
+  Link,
+  Outlet,
+  PathMatch,
+  matchPath,
+  useLocation,
+} from 'react-router-dom';
+
+const useRouteMatch = (
+  patterns: ReadonlyArray<string>,
+): PathMatch<string> | undefined => {
+  const { pathname } = useLocation();
+  for (let i = 0; i < patterns.length; i++) {
+    const pattern = patterns[i];
+    const match = matchPath(pattern, pathname);
+    if (!isNil(match)) {
+      return match;
+    }
+  }
+  return;
+};
 
 export default function SettingsLayout() {
-  const match = useMatches();
-  const currentTab = last(match)?.routeId;
+  const routeMatch = useRouteMatch([
+    '/settings/general',
+    '/settings/xmltv',
+    '/settings/ffmpeg',
+    '/settings/plex',
+    '/settings/hdhr',
+    '/settings/tasks',
+  ]);
+  const currentTab = routeMatch?.pattern?.path;
 
   return (
     <Box>
@@ -66,9 +85,7 @@ export default function SettingsLayout() {
         </Box>
 
         <Box sx={{ p: 3 }}>
-          <Suspense fallback={<LinearProgress />}>
-            <Outlet />
-          </Suspense>
+          <Outlet />
         </Box>
       </Paper>
     </Box>

@@ -11,7 +11,7 @@ import { Maybe } from '../types/util.js';
 import { TypedEventEmitter } from '../types/eventEmitter.js';
 import stream from 'stream';
 import { Logger, LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { isDefined, isNonEmptyString } from '../util/index.js';
+import { isNonEmptyString } from '../util/index.js';
 import { makeLocalUrl } from '../util/serverUtil.js';
 import {
   SupportedHardwareAccels,
@@ -699,22 +699,8 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
           ? `:enable='between(t,0,${watermark.duration})'`
           : '';
       let waterVideo = `[${overlayFile}:v]`;
-      const watermarkFilters: string[] = [];
       if (!watermark.fixedSize) {
-        watermarkFilters.push(`scale=${w}:-1`);
-      }
-
-      if (isDefined(watermark.opacity) && watermark.opacity < 100) {
-        watermarkFilters.push(
-          `format=argb,colorchannelmixer=aa=${round(
-            watermark.opacity / 100,
-            2,
-          )}`,
-        );
-      }
-
-      if (!isEmpty(watermarkFilters)) {
-        videoComplex += `;${waterVideo}${watermarkFilters.join(',')}[icn]`;
+        videoComplex += `;${waterVideo}scale=${w}:-1[icn]`;
         waterVideo = '[icn]';
       }
 
@@ -832,7 +818,7 @@ export class FFMPEG extends (events.EventEmitter as new () => TypedEventEmitter<
       ffmpegArgs.push(`-t`, `${duration}`);
     }
 
-    ffmpegArgs.push(`-f`, 'nut', `pipe:1`);
+    ffmpegArgs.push(`-f`, 'matroska', `pipe:1`);
 
     const doLogs = this.opts.enableLogging;
     if (this.hasBeenKilled) {

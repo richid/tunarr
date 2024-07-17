@@ -14,9 +14,12 @@ import {
   isContentBackedLineupIteam,
 } from '../dao/derived_types/StreamLineup.js';
 import { Channel } from '../dao/entities/Channel.js';
-import { LineupCreator } from '../services/dynamic_channels/LineupCreator.js';
+import { FillerPicker } from '../services/FillerPicker.js';
 import { PlayerContext } from '../stream/Player.js';
-import { generateChannelContext } from '../stream/StreamProgramCalculator.js';
+import {
+  StreamProgramCalculator,
+  generateChannelContext,
+} from '../stream/StreamProgramCalculator.js';
 import { PlexPlayer } from '../stream/plex/PlexPlayer.js';
 import { PlexTranscoder } from '../stream/plex/PlexTranscoder.js';
 import { StreamContextChannel } from '../stream/types.js';
@@ -24,7 +27,7 @@ import { SavePlexProgramExternalIdsTask } from '../tasks/SavePlexProgramExternal
 import { PlexTaskQueue } from '../tasks/TaskQueue.js';
 import { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { Maybe } from '../types/util.js';
-import { ifDefined, mapAsyncSeq } from '../util/index.js';
+import { mapAsyncSeq } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 
 const ChannelQuerySchema = {
@@ -43,7 +46,7 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
     async (req, res) => {
       void res.hijack();
       const t0 = new Date().getTime();
-      const channel = await req.serverCtx.channelDB.getChannelAndProgramsSLOW(
+      const channel = await req.serverCtx.channelDB.getChannelAndPrograms(
         req.query.channelId,
       );
 
@@ -90,7 +93,7 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
     '/debug/plex-transcoder/video-stats',
     { schema: ChannelQuerySchema },
     async (req, res) => {
-      const channel = await req.serverCtx.channelDB.getChannelAndProgramsSLOW(
+      const channel = await req.serverCtx.channelDB.getChannelAndPrograms(
         req.query.channelId,
       );
 
@@ -157,7 +160,7 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
 
     logger.info('lineupItem: %O', lineupItem);
 
-    const calculator = req.serverCtx.streamProgramCalculator();
+    const calculator = new StreamProgramCalculator();
     if (isNil(lineupItem)) {
       lineupItem = await calculator.createLineupItem(
         await calculator.getCurrentProgramAndTimeElapsed(
@@ -166,6 +169,7 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
           await req.serverCtx.channelDB.loadLineup(channel.uuid),
         ),
         channel,
+        false,
       );
     }
     return lineupItem;
@@ -187,9 +191,8 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
           .send({ error: 'No channel with ID ' + req.query.channelId });
       }
 
-      const result = req.serverCtx
-        .streamProgramCalculator()
-        .getCurrentProgramAndTimeElapsed(
+      const result =
+        new StreamProgramCalculator().getCurrentProgramAndTimeElapsed(
           new Date().getTime(),
           channel,
           await req.serverCtx.channelDB.loadLineup(channel.uuid),
@@ -292,17 +295,15 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
           .send({ error: 'No channel with ID ' + req.query.channelId });
       }
 
-      const calculator = req.serverCtx.streamProgramCalculator();
+      const calculator = new StreamProgramCalculator();
       const lineup = await calculator.createLineupItem(
         await calculator.getCurrentProgramAndTimeElapsed(
           new Date().getTime(),
           channel,
           await req.serverCtx.channelDB.loadLineup(channel.uuid),
         ),
-        // HACK until we remove much of the old DB code
-        await req.serverCtx.channelDB
-          .getChannel(req.query.channelId)
-          .then((x) => x!),
+        channel,
+        false,
       );
 
       return res.send(lineup);
@@ -332,18 +333,16 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
       }
 
       const fillers = await req.serverCtx.fillerDB.getFillersFromChannel(
-        channel.uuid,
+        channel.number,
       );
 
-      return res.send(fillers);
-
-      // return res.send(
-      //   new FillerPicker().pickRandomWithMaxDuration(
-      //     channel,
-      //     fillers,
-      //     req.query.maxDuration,
-      //   ),
-      // );
+      return res.send(
+        new FillerPicker().pickRandomWithMaxDuration(
+          channel,
+          fillers,
+          req.query.maxDuration,
+        ),
+      );
     },
   );
 
@@ -377,43 +376,4 @@ export const debugApi: RouterPluginAsyncCallback = async (fastify) => {
       return res.send();
     },
   );
-
-  fastify.get(
-    '/debug/helpers/promote_lineup',
-    {
-      schema: {
-        querystring: z.object({
-          channelId: z.string().uuid(),
-        }),
-      },
-    },
-    async (req, res) => {
-      const result = await new LineupCreator().resolveLineup(
-        req.query.channelId,
-      );
-      ifDefined(result, (r) => {
-        console.log(r.lineup.items.length);
-      });
-      return res.send(result);
-    },
-  );
-
-  fastify.get('/debug/channels/reload_all_lineups', async (req, res) => {
-    await req.serverCtx.channelDB.loadAllLineupConfigs(true);
-    return res.send();
-  });
-
-  fastify.get('/debug/db/test_direct_access', async (_req, res) => {
-    // const result = await directDbAccess()
-    //   .selectFrom('channel_programs')
-    //   .where('channel_uuid', '=', '0ff3ec64-1022-4afd-9178-3f27f1121d47')
-    //   .innerJoin('program', 'channel_programs.program_uuid', 'program.uuid')
-    //   .leftJoin('program_grouping', join => {
-    //     join.onRef('')
-    //   })
-    //   .select(['program'])
-    //   .execute();
-    // return res.send(result);
-    return res.send();
-  });
 };

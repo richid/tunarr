@@ -1,10 +1,6 @@
 import fs from 'node:fs/promises';
 import retry from 'async-retry';
-import {
-  SessionOptions,
-  StreamReadyResult,
-  StreamSession,
-} from './StreamSession';
+import { SessionOptions, StreamReadyResult, StreamSession } from './Session';
 import { isNodeError } from '../util';
 import { isError, isString } from 'lodash-es';
 import { ConcatStream } from './ConcatStream';

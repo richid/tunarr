@@ -7,7 +7,7 @@ import {
   ProgramSourceType,
   programSourceTypeFromString,
 } from '../dao/custom_types/ProgramSourceType';
-import { PlexApiFactory } from '../external/PlexApiFactory';
+import { PlexApiFactory } from '../external/plex';
 import { RouterPluginAsyncCallback } from '../types/serverType';
 
 const externalIdSchema = z
@@ -113,7 +113,7 @@ export const metadataApiRouter: RouterPluginAsyncCallback = async (fastify) => {
   );
 
   async function handlePlexItem(query: ExternalMetadataQuery) {
-    const plexApi = await PlexApiFactory().getOrSet(query.id.externalSourceId);
+    const plexApi = await PlexApiFactory.getOrSet(query.id.externalSourceId);
 
     if (isNil(plexApi)) {
       return null;
@@ -124,7 +124,6 @@ export const metadataApiRouter: RouterPluginAsyncCallback = async (fastify) => {
         itemKey: query.id.externalItemId,
         width: query.thumbOptions?.width,
         height: query.thumbOptions?.height,
-        upscale: '1',
       });
     }
 

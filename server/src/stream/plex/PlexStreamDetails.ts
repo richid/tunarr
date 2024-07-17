@@ -5,29 +5,19 @@ import {
   PlexMediaVideoStream,
   PlexMovie,
   PlexMusicTrack,
-  isPlexMusicTrack,
 } from '@tunarr/types/plex';
-import {
-  find,
-  first,
-  isEmpty,
-  isError,
-  isNull,
-  isUndefined,
-  replace,
-  trimEnd,
-} from 'lodash-es';
+import { find, first, isNull, isUndefined, replace, trimEnd } from 'lodash-es';
 import { PlexServerSettings } from '../../dao/entities/PlexServerSettings';
 import {
   Plex,
+  PlexApiFactory,
   isPlexQueryError,
   isPlexQuerySuccess,
 } from '../../external/plex';
-import { PlexApiFactory } from '../../external/PlexApiFactory';
 import { Nullable } from '../../types/util';
 import { Logger, LoggerFactory } from '../../util/logging/LoggerFactory';
 import { PlexStream, StreamDetails } from './PlexTranscoder';
-import { attempt, isNonEmptyString } from '../../util';
+import { isNonEmptyString } from '../../util';
 import { ContentBackedStreamLineupItem } from '../../dao/derived_types/StreamLineup.js';
 import { SettingsDB } from '../../dao/settings.js';
 import { makeLocalUrl } from '../../util/serverUtil.js';
@@ -48,7 +38,6 @@ type PlexItemStreamDetailsQuery = Pick<
  */
 export class PlexStreamDetails {
   private logger: Logger;
-  private plex: Plex;
 
   constructor(
     private server: PlexServerSettings,
@@ -60,8 +49,6 @@ export class PlexStreamDetails {
       // channel: channel.uuid,
       caller: import.meta,
     });
-
-    this.plex = PlexApiFactory().get(this.server);
   }
 
   async getStream(item: PlexItemStreamDetailsQuery) {
@@ -76,10 +63,9 @@ export class PlexStreamDetails {
       return null;
     }
 
+    const plex = PlexApiFactory.get(this.server);
     const expectedItemType = item.programType;
-    const itemMetadataResult = await this.plex.getItemMetadata(
-      item.externalKey,
-    );
+    const itemMetadataResult = await plex.getItemMetadata(item.externalKey);
 
     if (isPlexQueryError(itemMetadataResult)) {
       if (itemMetadataResult.code === 'not_found') {
@@ -95,7 +81,7 @@ export class PlexStreamDetails {
           (eid) => eid.sourceType === ProgramExternalIdType.PLEX_GUID,
         )?.externalKey;
         if (isNonEmptyString(plexGuid)) {
-          const byGuidResult = await this.plex.doTypeCheckedGet(
+          const byGuidResult = await plex.doTypeCheckedGet(
             '/library/all',
             PlexMediaContainerResponseSchema,
             {
@@ -162,7 +148,7 @@ export class PlexStreamDetails {
       return null;
     }
 
-    const details = await this.getItemStreamDetails(item, itemMetadata);
+    const details = this.getItemStreamDetails(item, itemMetadata);
 
     if (isNull(details)) {
       return null;
@@ -217,10 +203,10 @@ export class PlexStreamDetails {
     };
   }
 
-  private async getItemStreamDetails(
+  private getItemStreamDetails(
     item: PlexItemStreamDetailsQuery,
     media: PlexMovie | PlexEpisode | PlexMusicTrack,
-  ): Promise<Nullable<StreamDetails>> {
+  ): Nullable<StreamDetails> {
     const streamDetails: StreamDetails = {};
     const firstPart = first(first(media.Media)?.Part);
     streamDetails.serverPath = firstPart?.key;
@@ -277,24 +263,12 @@ export class PlexStreamDetails {
 
     if (audioOnly) {
       // TODO Use our proxy endpoint here
-      const placeholderThumbPath = isPlexMusicTrack(media)
-        ? media.parentThumb ?? media.grandparentThumb ?? media.thumb
-        : media.thumb;
+      streamDetails.placeholderImage = Plex.getThumbUrl({
+        ...this.server,
+        itemKey: item.externalKey,
+      });
 
-      // streamDetails.placeholderImage =
-
-      // We have to check that we can hit this URL or the stream will not work
-      if (isNonEmptyString(placeholderThumbPath)) {
-        const result = await attempt(() =>
-          this.plex.doHead(placeholderThumbPath),
-        );
-        if (!isError(result)) {
-          streamDetails.placeholderImage =
-            this.plex.getFullUrl(placeholderThumbPath);
-        }
-      }
-
-      if (isEmpty(streamDetails.placeholderImage)) {
+      if (!isNonEmptyString(streamDetails.placeholderImage)) {
         streamDetails.placeholderImage = makeLocalUrl(
           '/images/generic-music-screen.png',
         );

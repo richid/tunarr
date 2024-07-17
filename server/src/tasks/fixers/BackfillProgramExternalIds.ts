@@ -13,15 +13,14 @@ import { getEm } from '../../dao/dataSource';
 import { PlexServerSettings } from '../../dao/entities/PlexServerSettings.js';
 import { Program } from '../../dao/entities/Program';
 import { ProgramExternalId } from '../../dao/entities/ProgramExternalId.js';
-import { Plex, isPlexQueryError } from '../../external/plex.js';
-import { PlexApiFactory } from '../../external/PlexApiFactory';
+import { Plex, PlexApiFactory, isPlexQueryError } from '../../external/plex.js';
 import { Maybe } from '../../types/util.js';
 import { asyncPool } from '../../util/asyncPool.js';
 import { attempt, attemptSync, groupByUniq, wait } from '../../util/index.js';
 import { LoggerFactory } from '../../util/logging/LoggerFactory.js';
 import Fixer from './fixer';
 import { PlexTerminalMedia } from '@tunarr/types/plex';
-import { upsertProgramExternalIds_deprecated } from '../../dao/programExternalIdHelpers';
+import { upsertProgramExternalIds } from '../../dao/programExternalIdHelpers';
 
 export class BackfillProgramExternalIds extends Fixer {
   #logger = LoggerFactory.child({ caller: import.meta });
@@ -71,7 +70,7 @@ export class BackfillProgramExternalIds extends Fixer {
       });
 
       forEach(serverSettings, (server) => {
-        plexConnections[server.name] = PlexApiFactory().get(server);
+        plexConnections[server.name] = PlexApiFactory.get(server);
       });
 
       for await (const result of asyncPool(
@@ -91,7 +90,7 @@ export class BackfillProgramExternalIds extends Fixer {
           );
         } else {
           const upsertResult = await attempt(() =>
-            upsertProgramExternalIds_deprecated(result.result),
+            upsertProgramExternalIds(result.result),
           );
           if (isError(upsertResult)) {
             this.#logger.warn(

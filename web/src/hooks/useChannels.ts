@@ -1,4 +1,4 @@
-import { DataTag, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { DataTag, useQuery } from '@tanstack/react-query';
 import { Channel } from '@tunarr/types';
 import { ApiClient } from '../external/api';
 import { useTunarrApi } from './useTunarrApi';
@@ -15,11 +15,6 @@ export const channelsQuery = (
 export const useChannels = (initialData: Channel[] = []) => {
   const apiClient = useTunarrApi();
   return useQuery(channelsQuery(apiClient, initialData));
-};
-
-export const useSuspenseChannels = () => {
-  const apiClient = useTunarrApi();
-  return useSuspenseQuery(channelsQuery(apiClient));
 };
 
 export const channelQuery = (
@@ -42,11 +37,6 @@ export const useChannel = (
 ) => {
   const apiClient = useTunarrApi();
   return useQuery({ ...channelQuery(apiClient, id, enabled), initialData });
-};
-
-export const useChannelSuspense = (id: string, enabled: boolean = true) => {
-  const apiClient = useTunarrApi();
-  return useSuspenseQuery(channelQuery(apiClient, id, enabled));
 };
 
 // If we absolutely have initialData defined, we can use this hook instead,

@@ -12,7 +12,6 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
-  Link,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -33,20 +32,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Channel } from '@tunarr/types';
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
-import React, { Suspense, useState } from 'react';
-import { Link as RouterLink, useNavigate } from '@tanstack/react-router';
+import React, { useEffect, useState } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import TunarrLogo from '../../components/TunarrLogo.tsx';
 import NoChannelsCreated from '../../components/channel_config/NoChannelsCreated.tsx';
 import { isNonEmptyString } from '../../helpers/util.ts';
-import { useSuspenseChannels } from '../../hooks/useChannels.ts';
+import { useChannels } from '../../hooks/useChannels.ts';
 import { useTunarrApi } from '../../hooks/useTunarrApi.ts';
 import { useSettings } from '../../store/settings/selectors.ts';
-import { betterHumanize } from '@/helpers/dayjs.ts';
 
 export default function ChannelsPage() {
   const { backendUri } = useSettings();
   const apiClient = useTunarrApi();
-  const { data: channels } = useSuspenseChannels();
+  const now = dayjs();
+  const {
+    isFetching: channelsFetching,
+    error: channelsError,
+    data: channels,
+  } = useChannels();
   const theme = useTheme();
   const smallViewport = useMediaQuery(theme.breakpoints.down('sm'));
   const mediumViewport = useMediaQuery(theme.breakpoints.down('md'));
@@ -77,19 +80,16 @@ export default function ChannelsPage() {
   // To do: figure out better solution.  This is a temp workaround
   // Without this if user naviages away from tab then back, react query refetches and destroys exisitng ref
   // this moves menu to the top left of the screen.
-  // useEffect(() => {
-  //   setAnchorEl(null);
-  //   setChannelMenu(null);
-  // }, [channelsFetching]);
+  useEffect(() => {
+    setAnchorEl(null);
+    setChannelMenu(null);
+  }, [channelsFetching]);
 
   const handleChannelNavigation = (
     _: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
     id: string,
   ) => {
-    navigate({
-      to: `/channels/$channelId/programming`,
-      params: { channelId: id },
-    }).catch(console.error);
+    navigate(`/channels/${id}/programming`);
   };
 
   const removeChannelMutation = useMutation({
@@ -166,11 +166,10 @@ export default function ChannelsPage() {
             <ListItemText>Edit Channel Settings</ListItemText>
           </MenuItem>
           <MenuItem
-            href={`${
+            to={`${
               isNonEmptyString(backendUri) ? `${backendUri}/` : ''
             }media-player/${channelMenu.number}.m3u`}
-            target="_blank"
-            component={Link}
+            component={RouterLink}
             onClick={(e) => {
               e.stopPropagation();
             }}
@@ -210,6 +209,7 @@ export default function ChannelsPage() {
 
   // TODO properly define types from API
   const getDataTableRow = (channel: Channel) => {
+    const startTime = dayjs(channel.startTime);
     return (
       <TableRow
         key={channel.number}
@@ -228,11 +228,7 @@ export default function ChannelsPage() {
           </TableCell>
         )}
         <TableCell>{channel.name}</TableCell>
-        <TableCell>{channel.programCount.toLocaleString()}</TableCell>
-        <TableCell>
-          {betterHumanize(dayjs.duration(channel.duration), { style: 'short' })}
-        </TableCell>
-        {/* <TableCell>{startTime.isBefore(now) ? 'Yes' : 'No'}</TableCell> */}
+        <TableCell>{startTime.isBefore(now) ? 'Yes' : 'No'}</TableCell>
         <TableCell>{channel.stealth ? 'Yes' : 'No'}</TableCell>
         <TableCell sx={{ textAlign: 'right' }}>
           {mediumViewport ? (
@@ -296,29 +292,29 @@ export default function ChannelsPage() {
   };
 
   const getTableRows = () => {
-    // if (channelsFetching) {
-    //   return (
-    //     <TableRow key="pending">
-    //       <TableCell
-    //         colSpan={smallViewport ? 5 : 6}
-    //         sx={{ my: 2, textAlign: 'center' }}
-    //       >
-    //         <CircularProgress />
-    //       </TableCell>
-    //     </TableRow>
-    //   );
-    // } else if (channelsError) {
-    //   return (
-    //     <TableRow key="error">
-    //       <TableCell
-    //         colSpan={smallViewport ? 5 : 6}
-    //         sx={{ my: 2, textAlign: 'center' }}
-    //       >{`Error: ${channelsError.message}`}</TableCell>
-    //     </TableRow>
-    //   );
-    // } else {
-    // }
-    return channels?.map(getDataTableRow);
+    if (channelsFetching) {
+      return (
+        <TableRow key="pending">
+          <TableCell
+            colSpan={smallViewport ? 5 : 6}
+            sx={{ my: 2, textAlign: 'center' }}
+          >
+            <CircularProgress />
+          </TableCell>
+        </TableRow>
+      );
+    } else if (channelsError) {
+      return (
+        <TableRow key="error">
+          <TableCell
+            colSpan={smallViewport ? 5 : 6}
+            sx={{ my: 2, textAlign: 'center' }}
+          >{`Error: ${channelsError.message}`}</TableCell>
+        </TableRow>
+      );
+    } else {
+      return channels?.map(getDataTableRow);
+    }
   };
 
   return (
@@ -345,27 +341,13 @@ export default function ChannelsPage() {
               <TableCell>Number</TableCell>
               {!smallViewport && <TableCell>Icon</TableCell>}
               <TableCell>Name</TableCell>
-              <TableCell># Programs</TableCell>
-              <TableCell>Duration</TableCell>
+              <TableCell>Live?</TableCell>
               <TableCell>Stealth?</TableCell>
               <TableCell></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            <Suspense
-              fallback={
-                <TableRow key="pending">
-                  <TableCell
-                    colSpan={smallViewport ? 5 : 6}
-                    sx={{ my: 2, textAlign: 'center' }}
-                  >
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              }
-            >
-              {channels && channels.length > 0 && getTableRows()}
-            </Suspense>
+            {channels && channels.length > 0 && getTableRows()}
           </TableBody>
         </Table>
       </TableContainer>

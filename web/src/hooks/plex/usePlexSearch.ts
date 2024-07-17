@@ -1,10 +1,9 @@
 import { PlexLibrary } from '@/store/programmingSelector/store.ts';
-import { Maybe, Nilable } from '@/types/util.ts';
 import {
   DataTag,
-  queryOptions,
   useInfiniteQuery,
   useQuery,
+  queryOptions,
   useQueryClient,
 } from '@tanstack/react-query';
 import { PlexServerSettings } from '@tunarr/types';
@@ -16,6 +15,7 @@ import {
 import { forEach, isNil, isUndefined, sumBy } from 'lodash-es';
 import { fetchPlexPath } from '../../helpers/plexUtil.ts';
 import { useTunarrApi } from '../useTunarrApi.ts';
+import { Maybe, Nilable } from '@/types/util.ts';
 
 const usePlexSearchQueryFn = () => {
   const apiClient = useTunarrApi();

@@ -1,14 +1,6 @@
-import {
-  Box,
-  Divider,
-  FormControlLabel,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, TextField } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { SaveChannelRequest } from '@tunarr/types';
+import { Channel } from '@tunarr/types';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -17,6 +9,7 @@ import useStore from '../../store/index.ts';
 import TunarrLogo from '../TunarrLogo.tsx';
 import { ImageUploadInput } from '../settings/ImageUploadInput.tsx';
 import { NumericFormControllerText } from '../util/TypedController.tsx';
+import ChannelEditActions from './ChannelEditActions.tsx';
 
 const DefaultIconPath = '';
 
@@ -33,7 +26,7 @@ export function ChannelPropertiesEditor({ isNew }: Props) {
     getValues,
     setValue,
     formState: { defaultValues },
-  } = useFormContext<SaveChannelRequest>();
+  } = useFormContext<Channel>();
   const { data: channels } = useChannels();
 
   const onloadstart = () => {};
@@ -121,143 +114,112 @@ export function ChannelPropertiesEditor({ isNew }: Props) {
   };
 
   return (
-    channel && (
-      <>
-        <Box>
-          <Stack spacing={3} divider={<Divider />}>
-            <Box>
-              <Typography variant="h5">General</Typography>
-              <NumericFormControllerText
-                name="number"
-                control={control}
-                rules={{
-                  required: true,
-                  validate: validateNumber,
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleChannelNumberChange(Number(e.target.value)),
-                }}
-                TextFieldProps={{
-                  fullWidth: true,
-                  label: 'Channel Number',
-                  margin: 'normal',
-                }}
+    <>
+      {channel && (
+        <>
+          <NumericFormControllerText
+            name="number"
+            control={control}
+            rules={{
+              required: true,
+              validate: validateNumber,
+              onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                handleChannelNumberChange(Number(e.target.value)),
+            }}
+            TextFieldProps={{
+              fullWidth: true,
+              label: 'Channel Number',
+              margin: 'normal',
+            }}
+          />
+          <Controller
+            name="name"
+            control={control}
+            rules={{ required: 'Channel name is required' }}
+            render={({ field, formState: { errors } }) => (
+              <TextField
+                fullWidth
+                label="Channel Name"
+                margin="normal"
+                helperText={errors.name ? 'Channel name is required' : null}
+                {...field}
               />
-              <Controller
-                name="name"
-                control={control}
-                rules={{ required: 'Channel name is required' }}
-                render={({ field, formState: { errors } }) => (
-                  <TextField
-                    fullWidth
-                    label="Channel Name"
-                    margin="normal"
-                    helperText={errors.name ? 'Channel name is required' : null}
-                    {...field}
-                  />
-                )}
-              />
-              <Controller
-                name="groupTitle"
-                control={control}
-                rules={{ required: 'Channel group is required' }}
-                render={({ field, formState: { errors } }) => (
-                  <TextField
-                    fullWidth
-                    label="Channel Group"
-                    margin="normal"
-                    helperText={`This is used by iptv clients to categorize the channels. You can leave it as 'tunarr' if you don't need this sort of classification.
+            )}
+          />
+          <Controller
+            name="groupTitle"
+            control={control}
+            rules={{ required: 'Channel group is required' }}
+            render={({ field, formState: { errors } }) => (
+              <TextField
+                fullWidth
+                label="Channel Group"
+                margin="normal"
+                helperText={`This is used by iptv clients to categorize the channels. You can leave it as 'tunarr' if you don't need this sort of classification.
                   ${errors.groupTitle ? 'Channel group is required' : ''}`}
-                    {...field}
-                  />
-                )}
+                {...field}
               />
+            )}
+          />
 
-              {isNew && (
-                <Controller
-                  name="startTime"
-                  control={control}
-                  render={({ field }) => (
-                    <DateTimePicker
-                      label="Programming Start"
-                      slotProps={{
-                        textField: {
-                          margin: 'normal',
-                          fullWidth: true,
-                          onBlur: field.onBlur,
-                        },
-                      }}
-                      disablePast
-                      value={dayjs(field.value)}
-                      onChange={(newDateTime) =>
-                        field.onChange((newDateTime ?? dayjs()).unix() * 1000)
-                      }
-                    />
-                  )}
+          {isNew && (
+            <Controller
+              name="startTime"
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Programming Start"
+                  slotProps={{
+                    textField: {
+                      margin: 'normal',
+                      fullWidth: true,
+                      onBlur: field.onBlur,
+                    },
+                  }}
+                  disablePast
+                  value={dayjs(field.value)}
+                  onChange={(newDateTime) =>
+                    field.onChange((newDateTime ?? dayjs()).unix() * 1000)
+                  }
                 />
               )}
+            />
+          )}
 
-              <Box sx={{ display: 'flex', alignItems: 'end' }}>
-                {DefaultIconPath !== imagePath ? (
-                  <Box
-                    component="img"
-                    width="10%"
-                    src={imagePath}
-                    sx={{ mr: 1 }}
-                    ref={imgRef}
-                  />
-                ) : (
-                  <TunarrLogo style={{ width: '132px' }} />
-                )}
-
-                <Controller
-                  name="icon.path"
-                  control={control}
-                  render={({ field }) => (
-                    <ImageUploadInput
-                      FormControlProps={{ fullWidth: true, margin: 'normal' }}
-                      value={field.value}
-                      onFormValueChange={(newPath) => {
-                        field.onChange(newPath);
-                      }}
-                      fileRenamer={renameFile}
-                      label="Thumbnail URL"
-                      // TODO Pop a toast or something
-                      onUploadError={console.error}
-                    />
-                  )}
-                />
-              </Box>
-            </Box>
-            <Box>
-              <Typography variant="h5" sx={{ mb: 1 }}>
-                On-Demand
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                On-Demand channels resume from where you left off. Programming
-                is paused when the channel is not streaming.
-                <br />
-                <strong>NOTE:</strong> While the channel is inactive, the TV
-                Guide for the channel will be empty.
-              </Typography>
-              <Controller
-                control={control}
-                name="onDemand.enabled"
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={field.value}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                    }
-                    label="Enabled"
-                  />
-                )}
+          <Box sx={{ display: 'flex', alignItems: 'end' }}>
+            {DefaultIconPath !== imagePath ? (
+              <Box
+                component="img"
+                width="10%"
+                src={imagePath}
+                sx={{ mr: 1 }}
+                ref={imgRef}
               />
-            </Box>
-          </Stack>
-        </Box>
-      </>
-    )
+            ) : (
+              <TunarrLogo style={{ width: '132px' }} />
+            )}
+
+            <Controller
+              name="icon.path"
+              control={control}
+              render={({ field }) => (
+                <ImageUploadInput
+                  FormControlProps={{ fullWidth: true, margin: 'normal' }}
+                  value={field.value}
+                  onFormValueChange={(newPath) => {
+                    field.onChange(newPath);
+                  }}
+                  fileRenamer={renameFile}
+                  label="Thumbnail URL"
+                  // TODO Pop a toast or something
+                  onUploadError={console.error}
+                />
+              )}
+            />
+          </Box>
+          <ChannelEditActions />
+        </>
+      )}
+    </>
   );
 }

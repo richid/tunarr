@@ -1,15 +1,10 @@
-name: Publish Docs
+name: Public Docs
 on:
   push:
     branches:
-      - dev
-    paths:
-      - docs/**
-      - mkdocs.yml
-
+      - main
 permissions:
   contents: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest

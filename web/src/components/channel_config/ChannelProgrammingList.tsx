@@ -1,5 +1,3 @@
-import { useSuspendedStore } from '@/hooks/useSuspendedStore.ts';
-import { deleteProgram } from '@/store/entityEditor/util.ts';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Edit from '@mui/icons-material/Edit';
@@ -36,7 +34,10 @@ import {
   channelProgramUniqueId,
   isNonEmptyString,
 } from '../../helpers/util.ts';
-import { moveProgramInCurrentChannel } from '../../store/channelEditor/actions.ts';
+import {
+  deleteProgram,
+  moveProgramInCurrentChannel,
+} from '../../store/channelEditor/actions.ts';
 import useStore, { State } from '../../store/index.ts';
 import { materializedProgramListSelector } from '../../store/selectors.ts';
 import {
@@ -142,7 +143,7 @@ const programListItemTitleFormatter = (() => {
     }
     const dur = betterHumanize(
       dayjs.duration({ milliseconds: program.duration }),
-      { exact: true },
+      true,
     );
 
     return `${title} - (${dur})`;
@@ -335,7 +336,7 @@ export default function ChannelProgrammingList({
   enableDnd = defaultProps.enableDnd,
 }: Props) {
   const channel = useStore((s) => s.channelEditor.currentEntity);
-  const storeProgramList = useSuspendedStore(programListSelector!);
+  const storeProgramList = useStore(programListSelector!);
   const programList = passedProgramList ?? storeProgramList;
   const [focusedProgramDetails, setFocusedProgramDetails] = useState<
     ChannelProgram | undefined

@@ -4,19 +4,16 @@ import { Box, Button, Collapse, Stack, Typography } from '@mui/material';
 import Bowser from 'bowser';
 import { isError } from 'lodash-es';
 import { useMemo } from 'react';
+import { useRouteError } from 'react-router-dom';
 import errorImage from '../assets/error_this_is_fine.png';
 import { RotatingLoopIcon } from '../components/base/LoadingIcon';
 import { useVersion } from '../hooks/useVersion';
 
 const browser = Bowser.getParser(window.navigator.userAgent);
 
-type Props = {
-  error: unknown;
-  resetRoute: () => void;
-};
-
-export function ErrorPage({ error, resetRoute }: Props) {
+export function ErrorPage() {
   const { data: version, isLoading: versionLoading } = useVersion();
+  const error = useRouteError();
   const stack = (isError(error) ? error.stack : '') ?? '';
 
   const bugReportLink = useMemo(() => {
@@ -37,10 +34,6 @@ export function ErrorPage({ error, resetRoute }: Props) {
     return url;
   }, [stack, version?.tunarr]);
 
-  const handleRefresh = () => {
-    resetRoute();
-  };
-
   return (
     <Box sx={{ width: '100%' }}>
       <Box
@@ -56,7 +49,7 @@ export function ErrorPage({ error, resetRoute }: Props) {
       </div>
       <Stack direction="row" sx={{ justifyContent: 'center' }} gap={2}>
         <Button
-          onClick={handleRefresh}
+          onClick={() => window.location.reload()}
           variant="contained"
           startIcon={<Refresh />}
         >

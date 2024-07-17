@@ -81,8 +81,7 @@ echo TUNARR_BUILD=${tunarr_build} >> server/.env
 echo TUNARR_EDGE_BUILD=${is_edge_build} >> server/.env
 cat server/.env
 EOF
-RUN NODE_OPTIONS=--max-old-space-size=32768 pnpm turbo bundle --filter=@tunarr/server
-RUN NODE_OPTIONS=--max-old-space-size=32768 pnpm turbo bundle --filter=@tunarr/web
+RUN pnpm turbo bundle
 
 ### Begin server run ###
 FROM ffmpeg-base AS server

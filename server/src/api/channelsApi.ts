@@ -10,21 +10,18 @@ import {
   ChannelProgramSchema,
   ChannelSchema,
   CondensedChannelProgrammingSchema,
-  ContentProgramSchema,
+  ProgramSchema,
   SaveChannelRequestSchema,
 } from '@tunarr/types/schemas';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration.js';
-import { compact, groupBy, isError, isNil, map, omit, sortBy } from 'lodash-es';
+import { compact, isError, isNil, map, omit, sortBy } from 'lodash-es';
 import z from 'zod';
-import { ProgramConverter } from '../dao/converters/programConverters.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
 import { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { attempt, mapAsyncSeq } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { timeNamedAsync } from '../util/perf.js';
-import { dbChannelToApiChannel } from '../dao/converters/channelConverters.js';
 
 dayjs.extend(duration);
 
@@ -57,18 +54,13 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
     },
     async (req, res) => {
       try {
-        const channelsAndLineups =
-          await req.serverCtx.channelDB.loadAllLineupConfigs();
-
-        const result = sortBy(
-          map(channelsAndLineups, (channelAndLineup) => {
-            return dbChannelToApiChannel(channelAndLineup);
-          }),
+        const channels = sortBy(
+          await req.serverCtx.channelDB.getAllChannels(),
           'number',
         );
-
-        return res.send(result);
+        return res.send(channels.map((c) => c.toDTO()));
       } catch (err) {
+        console.error(err);
         return res.status(500).send('error');
       }
     },
@@ -90,11 +82,10 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
     },
     async (req, res) => {
       try {
-        const channelAndLineup =
-          await req.serverCtx.channelDB.loadChannelAndLineup(req.params.id);
+        const channel = await req.serverCtx.channelDB.getChannel(req.params.id);
 
-        if (!isNil(channelAndLineup)) {
-          return res.send(dbChannelToApiChannel(channelAndLineup));
+        if (!isNil(channel)) {
+          return res.send(channel.toDTO());
         } else {
           return res.status(404).send();
         }
@@ -113,7 +104,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
         tags: ['Channels'],
         body: SaveChannelRequestSchema,
         response: {
-          201: ChannelSchema,
+          201: z.object({ id: z.string() }),
           500: z.object({}),
         },
       },
@@ -128,7 +119,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
       if (isError(inserted)) {
         return res.status(500).send(inserted);
       }
-      return res.status(201).send(dbChannelToApiChannel(inserted));
+      return res.status(201).send({ id: inserted });
     },
   );
 
@@ -158,10 +149,8 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
             channel.uuid,
             channelUpdate,
           );
-          await req.serverCtx.guideService.updateCachedChannel(channel.uuid);
-          return res.send(
-            omit(dbChannelToApiChannel(updatedChannel), 'programs'),
-          );
+          await req.serverCtx.guideService.updateCachedChannel(updatedChannel);
+          return res.send(omit(updatedChannel.toDTO(), 'programs'));
         } else {
           return res.status(404).send();
         }
@@ -214,7 +203,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
         params: BasicIdParamSchema,
         tags: ['Channels'],
         response: {
-          200: z.array(ContentProgramSchema).readonly(),
+          200: z.array(ProgramSchema).readonly(),
           404: z.void(),
         },
       },
@@ -226,20 +215,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
         );
 
         if (!isNil(channel)) {
-          const converter = new ProgramConverter();
-          const externalIds =
-            await req.serverCtx.channelDB.getChannelProgramExternalIds(
-              channel.uuid,
-            );
-          const externalIdsByProgramId = groupBy(externalIds, 'programUuid');
-          return res.send(
-            map(channel.programs, (program) =>
-              converter.directEntityToContentProgramSync(
-                program,
-                externalIdsByProgramId[program.uuid] ?? [],
-              ),
-            ),
-          );
+          return res.send(map(channel.programs, (p) => p.toDTO()));
         } else {
           return res.status(404).send();
         }
@@ -254,8 +230,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
     '/channels/:id/programming',
     {
       schema: {
-        params: BasicIdParamSchema,
-        querystring: BasicPagingSchema,
+        params: BasicIdParamSchema.merge(BasicPagingSchema),
         tags: ['Channels'],
         response: {
           200: CondensedChannelProgrammingSchema,
@@ -264,16 +239,18 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
       },
     },
     async (req, res) => {
-      const exists = await req.serverCtx.channelDB.channelExists(req.params.id);
+      const channel = await req.serverCtx.channelDB.getChannelById(
+        req.params.id,
+      );
 
-      if (!exists) {
+      if (!channel) {
         return res.status(404).send({ error: 'Channel Not Found' });
       }
 
       const apiLineup = await req.serverCtx.channelDB.loadCondensedLineup(
         req.params.id,
-        req.query.offset ?? 0,
-        req.query.limit ?? -1,
+        req.params.offset ?? 0,
+        req.params.limit ?? -1,
       );
 
       if (isNil(apiLineup)) {
@@ -282,8 +259,7 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
           .send({ error: 'Could not find channel lineup.' });
       }
 
-      // TODO: get rid of this
-      return res.serializer(JSON.stringify).send(apiLineup);
+      return res.send(apiLineup);
     },
   );
 
@@ -303,7 +279,11 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
       },
     },
     async (req, res) => {
-      if (isNil(await req.serverCtx.channelDB.getChannel(req.params.id))) {
+      if (
+        isNil(
+          await req.serverCtx.channelDB.getChannelAndPrograms(req.params.id),
+        )
+      ) {
         return res.status(404).send();
       }
 
@@ -333,17 +313,15 @@ export const channelsApi: RouterPluginAsyncCallback = async (fastify) => {
       //     from the updateLineup call above. If performance suffers we can look into this
       //  2. We can just remove this completely and invalidate the lineup on the frontend
       //     and make it reload. Also not very clean, but not the end of the world.
-      const newLineup = await timeNamedAsync(
-        'build fresh lineup',
-        LoggerFactory.root,
-        () => req.serverCtx.channelDB.loadCondensedLineup(req.params.id),
+      const newLineup = await req.serverCtx.channelDB.loadCondensedLineup(
+        req.params.id,
       );
 
       if (isNil(newLineup)) {
         return res.status(500).send();
       }
 
-      return res.status(200).serializer(JSON.stringify).send(newLineup);
+      return res.status(200).send(newLineup);
     },
   );
 

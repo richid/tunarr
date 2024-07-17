@@ -1,4 +1,5 @@
 import {
+  Cascade,
   Collection,
   Entity,
   EntityDTO,
@@ -7,21 +8,23 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
+  OptionalProps,
   Property,
   Ref,
   Unique,
   serialize,
 } from '@mikro-orm/core';
-import { createExternalId } from '@tunarr/shared';
 import { Program as ProgramDTO } from '@tunarr/types';
+import type { Duration } from 'dayjs/plugin/duration.js';
 import { enumKeys } from '../../util/enumUtil.js';
 import { ProgramSourceType } from '../custom_types/ProgramSourceType.js';
 import { BaseEntity } from './BaseEntity.js';
 import { Channel } from './Channel.js';
 import { CustomShow } from './CustomShow.js';
 import { FillerShow } from './FillerShow.js';
-import { ProgramExternalId } from './ProgramExternalId.js';
 import { ProgramGrouping } from './ProgramGrouping.js';
+import { createExternalId } from '@tunarr/shared';
+import { ProgramExternalId } from './ProgramExternalId.js';
 
 /**
  * Program represents a 'playable' entity. A movie, episode, or music track
@@ -31,31 +34,29 @@ import { ProgramGrouping } from './ProgramGrouping.js';
 @Unique({ properties: ['sourceType', 'externalSourceId', 'externalKey'] })
 @Index({ properties: ['sourceType', 'externalSourceId', 'plexRatingKey'] })
 export class Program extends BaseEntity {
-  /**
-   * @deprecated Programs will soon be able to have multiple sources
-   */
+  [OptionalProps] = 'durationMs';
+
   @Enum(() => ProgramSourceType)
   sourceType!: ProgramSourceType;
 
   @Property({ nullable: true })
   originalAirDate?: string;
 
-  /**
-   * Program duration in milliseconds.
-   */
   @Property()
   duration!: number;
+
+  set durationObj(duration: Duration) {
+    this.duration = duration.asMilliseconds();
+  }
 
   @Property({ nullable: true })
   episode?: number;
 
-  // TODO: This should probably be factored into the source-specific table
   @Property({ nullable: true })
   episodeIcon?: string;
 
   /**
    * Previously "file"
-   * @deprecated Do not read from this field. Use the program_external_id table instead
    */
   @Property({ nullable: true })
   filePath?: string;
@@ -65,7 +66,6 @@ export class Program extends BaseEntity {
 
   /**
    * Previously "serverKey"
-   * @deprecated Do not read from this field. Use the apporpriate entry from the `program_external_id` table instead
    */
   @Property()
   externalSourceId!: string; // e.g., Plex server name
@@ -91,17 +91,11 @@ export class Program extends BaseEntity {
   @Property({ nullable: true })
   plexFilePath?: string;
 
-  /**
-   * For TV Shows, this is the season key
-   * @deprecated Prefer joining on the relevant `program_grouping` + `program_grouping_external_id` entries
-   */
+  // For TV Shows, this is the season key
   @Property({ nullable: true })
   parentExternalKey?: string;
 
-  /**
-   * For TV shows, this is the show key
-   * @deprecated Prefer joining on the relevant `program_grouping` + `program_grouping_external_id` entries
-   */
+  // For TV shows, this is the show key
   @Property({ nullable: true })
   grandparentExternalKey?: string;
 
@@ -159,43 +153,19 @@ export class Program extends BaseEntity {
   })
   fillerShows = new Collection<FillerShow>(this);
 
-  @ManyToOne(() => ProgramGrouping, {
-    nullable: true,
-    ref: true, // Disable cascade persist because of the unique partial indexes here
-    lazy: true,
-    // We have to manage this manually.
-    cascade: [],
-  })
+  @ManyToOne(() => ProgramGrouping, { nullable: true, ref: true })
   season?: Ref<ProgramGrouping>;
 
   @ManyToOne(() => ProgramGrouping, {
     nullable: true,
-    ref: true,
-    lazy: true,
-    // Disable cascade persist because of the unique partial indexes here
-    // We have to manage this manually.
-    cascade: [],
+    cascade: [Cascade.PERSIST],
   })
   tvShow?: Ref<ProgramGrouping>;
 
-  @ManyToOne(() => ProgramGrouping, {
-    nullable: true,
-    ref: true,
-    lazy: true,
-    // Disable cascade persist because of the unique partial indexes here
-    // We have to manage this manually.
-    cascade: [],
-  })
+  @ManyToOne(() => ProgramGrouping, { nullable: true, ref: true })
   album?: Ref<ProgramGrouping>;
 
-  @ManyToOne(() => ProgramGrouping, {
-    nullable: true,
-    ref: true,
-    lazy: true,
-    // Disable cascade persist because of the unique partial indexes here
-    // We have to manage this manually.
-    cascade: [],
-  })
+  @ManyToOne(() => ProgramGrouping, { nullable: true, ref: true })
   artist?: Ref<ProgramGrouping>;
 
   @OneToMany(() => ProgramExternalId, (eid) => eid.program, {

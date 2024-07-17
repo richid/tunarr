@@ -1,35 +1,51 @@
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import { useBlocker } from '@tanstack/react-router';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from '@mui/material';
+import React from 'react';
+import { BlockerFunction, matchPath, useBlocker } from 'react-router-dom';
 
 type Props = {
   isDirty: boolean;
+  exemptPath?: string;
   onProceed?: CallableFunction;
 };
 
 // Exempt paths are used in situations where the form spans multiple tabs or pages.
 // This ensures the Alert is not activated in the middle of a form navigation.
 
-export default function UnsavedNavigationAlert({ isDirty, onProceed }: Props) {
-  const { proceed, status, reset } = useBlocker({
-    condition: isDirty,
-  });
+export default function UnsavedNavigationAlert(props: Props) {
+  const { isDirty, exemptPath, onProceed } = props;
+
+  let shouldBlock = React.useCallback<BlockerFunction>(
+    ({ currentLocation, nextLocation }) => {
+      const isExemptPath = matchPath(exemptPath || '', nextLocation.pathname);
+
+      return (
+        isDirty &&
+        !isExemptPath &&
+        currentLocation.pathname !== nextLocation.pathname
+      );
+    },
+    [isDirty],
+  );
+  let blocker = useBlocker(shouldBlock);
 
   const handleProceed = () => {
-    proceed();
+    blocker.proceed?.();
     if (onProceed) {
       onProceed();
     }
   };
 
-  return status === 'blocked' ? (
+  return blocker && blocker.state === 'blocked' ? (
     <Dialog
-      open={status === 'blocked'}
-      onClose={reset}
+      open={blocker.state === 'blocked'}
+      onClose={() => blocker.reset?.()}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
@@ -43,7 +59,7 @@ export default function UnsavedNavigationAlert({ isDirty, onProceed }: Props) {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={reset}>Cancel</Button>
+        <Button onClick={() => blocker.reset?.()}>Cancel</Button>
         <Button onClick={handleProceed} autoFocus variant="contained">
           Proceed
         </Button>

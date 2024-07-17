@@ -3,8 +3,9 @@ import { CircularProgress } from '@mui/material';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import { SaveChannelRequest } from '@tunarr/types';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { ChannelEditContext } from '../../pages/channels/EditChannelContext.ts';
 import {
   Mutation,
   MutationState,
@@ -15,15 +16,9 @@ import { useChannelEditor } from '@/store/selectors.ts';
 import { isUndefined, last } from 'lodash-es';
 import { useSnackbar } from 'notistack';
 
-type ChannelEditActionsProps = {
-  isNewChannel: boolean;
-};
-
-export default function ChannelEditActions({
-  isNewChannel,
-}: ChannelEditActionsProps) {
+export default function ChannelEditActions() {
   const { currentEntity: channel } = useChannelEditor();
-  // const { channelEditorState } = useContext(ChannelEditContext)!;
+  const { channelEditorState } = useContext(ChannelEditContext)!;
   const {
     formState: { isValid, isDirty, isSubmitting },
     reset,
@@ -35,7 +30,10 @@ export default function ChannelEditActions({
     MutationState<unknown, Error, SaveChannelRequest>
   >({
     filters: {
-      mutationKey: ['channels', isNewChannel ? 'create' : 'update'],
+      mutationKey: [
+        'channels',
+        channelEditorState.isNewChannel ? 'create' : 'update',
+      ],
       predicate: (mutation: Mutation<unknown, Error, SaveChannelRequest>) =>
         mutation.state.variables?.id === channel?.id,
     },
@@ -47,7 +45,7 @@ export default function ChannelEditActions({
       setLastState(currentState);
 
       if (lastState === 'pending') {
-        if (currentState === 'success' && !isNewChannel) {
+        if (currentState === 'success' && !channelEditorState.isNewChannel) {
           snackbar.enqueueSnackbar('Channel settings saved!', {
             variant: 'success',
           });
@@ -66,11 +64,11 @@ export default function ChannelEditActions({
         }
       }
     }
-  }, [isNewChannel, currentState, lastState, snackbar]);
+  }, [channelEditorState.isNewChannel, currentState, lastState, snackbar]);
 
   return (
     <Stack spacing={2} direction="row" justifyContent="right" sx={{ mt: 2 }}>
-      {!isNewChannel ? (
+      {!channelEditorState.isNewChannel ? (
         <>
           {isDirty && (
             <Button onClick={() => reset()} variant="outlined">
