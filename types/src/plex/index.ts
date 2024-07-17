@@ -261,8 +261,8 @@ export const PlexMediaStreamSchema = z.discriminatedUnion('streamType', [
 
 export const PlexMediaDescriptionSchema = z.object({
   id: z.number(),
-  duration: z.number(),
-  bitrate: z.number(),
+  duration: z.number().optional(),
+  bitrate: z.number().optional(),
   width: z.number().optional(), // Video only
   height: z.number().optional(), // Video only
   aspectRatio: z.number().optional(), // Video only
@@ -280,7 +280,7 @@ export const PlexMediaDescriptionSchema = z.object({
       key: z.string(),
       duration: z.number().optional(),
       file: z.string(),
-      size: z.number(),
+      size: z.number().optional(),
       audioProfile: z.string().optional(),
       container: z.string().optional(),
       videoProfile: z.string().optional(), // video only
@@ -346,18 +346,18 @@ export const PlexTvShowSchema = BasePlexMediaSchema.extend({
   index: z.number(),
   leafCount: z.number(),
   originallyAvailableAt: z.string(),
-  primaryExtraKey: z.string(),
+  primaryExtraKey: z.string().optional(),
   Role: z.array(PlexJoinItemSchema),
-  studio: z.string(),
+  studio: z.string().optional(),
   summary: z.string(),
-  tagline: z.string(),
-  theme: z.string(),
+  tagline: z.string().optional(),
+  theme: z.string().optional(),
   thumb: z.string(),
   title: z.string(),
   type: z.literal('show'),
   updatedAt: z.number().optional(),
-  viewedLeafCount: z.number(),
-  year: z.number(),
+  viewedLeafCount: z.number().optional(),
+  year: z.number().optional(),
 }).merge(neverDirectory);
 
 export type PlexTvShow = Alias<z.infer<typeof PlexTvShowSchema>>;
@@ -373,13 +373,13 @@ export const PlexTvSeasonSchema = BasePlexMediaSchema.extend({
   summary: z.string(),
   index: z.number(),
   parentIndex: z.number(),
-  parentYear: z.number(),
+  parentYear: z.number().optional(),
   thumb: z.string(),
   art: z.string(),
   parentThumb: z.string(),
-  parentTheme: z.string(),
+  parentTheme: z.string().optional(),
   leafCount: z.number(),
-  viewedLeafCount: z.number(),
+  viewedLeafCount: z.number().optional(),
   addedAt: z.number(),
   updatedAt: z.number().optional(),
 }).merge(neverDirectory);
@@ -391,8 +391,8 @@ export const PlexMusicArtistSchema = BasePlexMediaSchema.extend({
   title: z.string(),
   summary: z.string().optional(),
   index: z.number(),
-  viewCount: z.number(),
-  skipCount: z.number(),
+  viewCount: z.number().optional(),
+  skipCount: z.number().optional(),
   lastViewedAt: z.number().optional(),
   thumb: z.string().optional(),
   art: z.string().optional(),
@@ -414,8 +414,8 @@ export const PlexMusicAlbumSchema = BasePlexMediaSchema.extend({
   parentTitle: z.string(), // Artist name
   summary: z.string().optional(),
   index: z.number(),
-  viewCount: z.number(),
-  skipCount: z.number(),
+  viewCount: z.number().optional(),
+  skipCount: z.number().optional(),
   lastViewedAt: z.number().optional(),
   year: z.number().optional(),
   thumb: z.string().optional(),
@@ -927,4 +927,8 @@ export const PlexMediaContainerResponseSchema = z.object({
     librarySectionTitle: z.string().optional(),
     Metadata: z.array(PlexMediaSchema),
   }),
+});
+
+export const PlexGenericMediaContainerResponseSchema = z.object({
+  MediaContainer: z.record(z.any()),
 });

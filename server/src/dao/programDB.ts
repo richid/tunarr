@@ -1,7 +1,18 @@
-import { chunk, flatten, groupBy, isNil, keys, map, union } from 'lodash-es';
+import {
+  chunk,
+  flatten,
+  groupBy,
+  isNil,
+  keys,
+  map,
+  mapValues,
+  union,
+  uniq,
+} from 'lodash-es';
 import {
   groupByAndMapAsync,
   groupByUniq,
+  groupByUniqFunc,
   isNonEmptyString,
   mapReduceAsyncSeq,
 } from '../util/index.js';
@@ -17,6 +28,21 @@ import { asyncPool, unfurlPool } from '../util/asyncPool.js';
 import { Loaded } from '@mikro-orm/better-sqlite';
 
 export class ProgramDB {
+  async getProgramById(id: string) {
+    return getEm().findOne(Program, id, { populate: ['externalIds'] });
+  }
+
+  async getProgramsByIds(ids: string[], batchSize: number = 50) {
+    const em = getEm();
+    return mapReduceAsyncSeq(
+      chunk(uniq(ids), batchSize),
+      (ids) =>
+        em.find(Program, { uuid: { $in: ids } }, { populate: ['externalIds'] }),
+      (acc, curr) => [...acc, ...curr],
+      [] as Loaded<Program, 'externalIds', '*', never>[],
+    );
+  }
+
   async lookupByExternalIds(
     ids: Set<[string, string, string]>,
     chunkSize: number = 25,
@@ -60,6 +86,33 @@ export class ProgramDB {
           skipPopulate: { externalIds: false },
         });
       },
+    );
+  }
+
+  async programIdsByExternalIds(
+    ids: Set<[string, string, string]>,
+    chunkSize: number = 50,
+  ) {
+    const em = getEm();
+    const tasks = asyncPool(
+      chunk([...ids], chunkSize),
+      async (idChunk) => {
+        return await em.find(ProgramExternalId, {
+          $or: map(idChunk, ([ps, es, ek]) => ({
+            sourceType: programExternalIdTypeFromString(ps)!,
+            externalSourceId: es,
+            externalKey: ek,
+          })),
+        });
+      },
+      { concurrency: 2 },
+    );
+
+    return mapValues(
+      groupByUniqFunc(flatten(await unfurlPool(tasks)), (eid) =>
+        eid.toExternalIdString(),
+      ),
+      (eid) => eid.program.uuid,
     );
   }
 

@@ -1,3 +1,4 @@
+import { useSettings } from '@/store/settings/selectors.ts';
 import { CheckCircle, RadioButtonUnchecked } from '@mui/icons-material';
 import {
   Box,
@@ -10,6 +11,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
+import { createExternalId } from '@tunarr/shared';
 import {
   PlexChildMediaApiType,
   PlexMedia,
@@ -41,8 +43,6 @@ import {
   removePlexSelectedMedia,
 } from '../../store/programmingSelector/actions.ts';
 import { PlexSelectedMedia } from '../../store/programmingSelector/store.ts';
-import { useSettings } from '@/store/settings/selectors.ts';
-import { createExternalId } from '@tunarr/shared';
 
 export interface PlexGridItemProps<T extends PlexMedia> {
   item: T;
@@ -175,6 +175,8 @@ export const PlexGridItem = forwardRef(
       item.type,
     );
 
+    const isEpisodeItem = ['episode'].includes(item.type);
+
     let thumbSrc: string;
     if (isPlexPlaylist(item)) {
       thumbSrc = `${server.uri}${item.composite}?X-Plex-Token=${server.accessToken}`;
@@ -183,7 +185,8 @@ export const PlexGridItem = forwardRef(
         mode: 'proxy',
         asset: 'thumb',
         id: createExternalId('plex', server.name, item.ratingKey),
-        thumbOptions: JSON.stringify({ width: 480, height: 720 }),
+        // Commenting this out for now as temporary solution for image loading issue
+        // thumbOptions: JSON.stringify({ width: 480, height: 720 }),
       });
 
       thumbSrc = `${
@@ -193,8 +196,8 @@ export const PlexGridItem = forwardRef(
 
     return (
       <Fade
-        in={isInViewport && !isUndefined(item) && (imageLoaded || hasThumb)}
-        timeout={500}
+        in={isInViewport && !isUndefined(item) && hasThumb === imageLoaded}
+        timeout={750}
         ref={imageContainerRef}
       >
         <div>
@@ -209,8 +212,6 @@ export const PlexGridItem = forwardRef(
               paddingLeft: '8px !important',
               paddingRight: '8px',
               paddingTop: '8px',
-              borderRadiusTopLeft: '10px',
-              borderRadiusTopRight: '10px',
               height: 'auto',
               backgroundColor: (theme) =>
                 props.modalIndex === props.index
@@ -218,8 +219,6 @@ export const PlexGridItem = forwardRef(
                     ? theme.palette.grey[800]
                     : theme.palette.grey[400]
                   : 'transparent',
-              borderTopLeftRadius: '0.5em',
-              borderTopRightRadius: '0.5em',
               ...style,
             }}
             onClick={
@@ -229,12 +228,12 @@ export const PlexGridItem = forwardRef(
             }
             ref={ref}
           >
-            {isInViewport && // TODO: Eventually turn this itno isNearViewport so images load before they hit the viewport
+            {isInViewport && // TODO: Eventually turn this into isNearViewport so images load before they hit the viewport
               (hasThumb ? (
                 <Box
                   sx={{
                     position: 'relative',
-                    minHeight: isMusicItem ? 100 : 200,
+                    minHeight: isMusicItem ? 100 : isEpisodeItem ? 84 : 225, // 84 accomodates episode img height
                     maxHeight: '100%',
                   }}
                 >
@@ -258,13 +257,17 @@ export const PlexGridItem = forwardRef(
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      aspectRatio: isMusicItem ? '1/1' : '2/3',
+                      aspectRatio: isMusicItem
+                        ? '1/1'
+                        : isEpisodeItem
+                        ? '1.77/1'
+                        : '2/3',
                       width: '100%',
                       height: 'auto',
                       zIndex: 1,
                       opacity: imageLoaded ? 0 : 1,
                       visibility: imageLoaded ? 'hidden' : 'visible',
-                      minHeight: isMusicItem ? 100 : 200,
+                      minHeight: isMusicItem ? 100 : isEpisodeItem ? 84 : 225,
                     }}
                   ></Box>
                 </Box>
@@ -273,7 +276,7 @@ export const PlexGridItem = forwardRef(
                   animation={false}
                   variant="rounded"
                   sx={{ borderRadius: '5%' }}
-                  height={isMusicItem ? 144 : 250}
+                  height={isMusicItem ? 144 : isEpisodeItem ? 84 : 250}
                 />
               ))}
             <ImageListItemBar

@@ -1,7 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDotEnv": [".env"],
-  "pipeline": {
+  "tasks": {
     "topo": {
       "dependsOn": ["^topo"]
     },
@@ -11,8 +10,8 @@
       "outputs": ["build/**", "dist/**"]
     },
     "bundle": {
-      "dependsOn": ["clean", "build"],
-      "outputs": ["build/**", "dist/**"]
+      "dependsOn": ["build"],
+      "outputs": ["build/**"]
     },
     "build-dev": {},
     "lint": {},

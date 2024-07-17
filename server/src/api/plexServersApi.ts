@@ -8,7 +8,8 @@ import { PlexServerSettingsSchema } from '@tunarr/types/schemas';
 import { isError, isNil, isObject } from 'lodash-es';
 import z from 'zod';
 import { PlexServerSettings } from '../dao/entities/PlexServerSettings.js';
-import { Plex, PlexApiFactory } from '../external/plex.js';
+import { Plex } from '../external/plex.js';
+import { PlexApiFactory } from '../external/PlexApiFactory.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
 import { RouterPluginAsyncCallback } from '../types/serverType.js';
@@ -93,14 +94,13 @@ export const plexServersRouter: RouterPluginAsyncCallback = async (
     {
       schema: {
         body: z.object({
-          name: z.string(),
+          name: z.string().optional(),
           accessToken: z.string(),
           uri: z.string(),
         }),
         response: {
           200: z.object({
-            // TODO Change this, this is very stupid
-            status: z.union([z.literal(1), z.literal(-1)]),
+            healthy: z.boolean(),
           }),
           404: z.void(),
           500: z.void(),
@@ -109,21 +109,25 @@ export const plexServersRouter: RouterPluginAsyncCallback = async (
     },
     async (req, res) => {
       try {
-        const plex = new Plex(req.body);
+        const plex = new Plex({
+          ...req.body,
+          name: req.body.name ?? 'unknown',
+        });
 
-        const s: 1 | -1 = await Promise.race([
+        const s: boolean = await Promise.race([
           (async () => {
-            return await plex.checkServerStatus();
+            const res = await plex.checkServerStatus();
+            return res === 1;
           })(),
-          new Promise<-1>((resolve) => {
+          new Promise<false>((resolve) => {
             setTimeout(() => {
-              resolve(-1);
+              resolve(false);
             }, 60000);
           }),
         ]);
 
         return res.send({
-          status: s,
+          healthy: s,
         });
       } catch (err) {
         logger.error('%O', err);
@@ -319,7 +323,7 @@ export const plexServersRouter: RouterPluginAsyncCallback = async (
           return res.status(404).send({ message: 'Plex server not found.' });
         }
 
-        const plex = PlexApiFactory.get(server);
+        const plex = PlexApiFactory().get(server);
 
         const s = await Promise.race([
           plex.checkServerStatus().then((res) => res === 1),

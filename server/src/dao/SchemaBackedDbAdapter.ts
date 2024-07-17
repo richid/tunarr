@@ -25,8 +25,12 @@ export class SchemaBackedDbAdapter<T extends z.ZodTypeAny, Out = z.infer<T>>
   }
 
   async read(): Promise<Out | null> {
-    const data = await this.adapter.read();
+    const data = await this.adapter.read().catch((e) => {
+      console.error(e);
+      return null;
+    });
     if (data === null) {
+      console.log(this.path, data);
       return null;
     }
     const parsed: unknown = JSON.parse(data);
@@ -62,8 +66,8 @@ export class SchemaBackedDbAdapter<T extends z.ZodTypeAny, Out = z.infer<T>>
     const parseResult = await this.schema.safeParseAsync(data);
     if (!parseResult.success) {
       this.logger.warn(
-        'Could not verify schema before saving to DB - the given type does not match the expected schema.',
         parseResult.error,
+        'Could not verify schema before saving to DB - the given type does not match the expected schema.',
       );
       throw new Error(
         'Could not verify schema before saving to DB - the given type does not match the expected schema.',

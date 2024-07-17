@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
-  "pipeline": {
+  "tasks": {
     "typecheck": {
       "dependsOn": ["^build", "generate-db-cache"]
     },
@@ -20,6 +20,9 @@
       "outputs": ["build/**"]
     },
     "make-exec:linux": {
+      "dependsOn": ["make-exec-base"]
+    },
+    "make-exec:linux-arm64v8": {
       "dependsOn": ["make-exec-base"]
     },
     "make-exec:windows": {

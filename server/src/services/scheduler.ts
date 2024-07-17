@@ -17,6 +17,7 @@ import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 import { parseEveryScheduleRule } from '../util/schedulingUtil.js';
 import { BackupSettings } from '@tunarr/types/schemas';
 import { DeepReadonly } from 'ts-essentials';
+import { OnDemandChannelStateTask } from '../tasks/OnDemandChannelStateTask.js';
 
 const { isDayjs } = dayjs;
 
@@ -130,6 +131,16 @@ export const scheduleJobs = once((serverContext: ServerContext) => {
   );
 
   GlobalScheduler.scheduleTask(
+    OnDemandChannelStateTask.ID,
+    new ScheduledTask(
+      OnDemandChannelStateTask.name,
+      minutesCrontab(1),
+      () => new OnDemandChannelStateTask(),
+      { runAtStartup: true },
+    ),
+  );
+
+  GlobalScheduler.scheduleTask(
     ScheduleDynamicChannelsTask.ID,
     new ScheduledTask(
       ScheduleDynamicChannelsTask.name,
@@ -137,6 +148,7 @@ export const scheduleJobs = once((serverContext: ServerContext) => {
       hoursCrontab(1),
       () => ScheduleDynamicChannelsTask.create(serverContext.channelDB),
       {
+        runAtStartup: true,
         runOnSchedule: true,
       },
     ),

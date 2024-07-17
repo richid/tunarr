@@ -15,13 +15,17 @@ import { PlexMedia } from '@tunarr/types/plex';
 import dayjs, { Dayjs } from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import {
+  attempt,
   flatMap,
+  isEmpty,
+  isError,
   isNumber,
   isString,
   map,
   property,
   range,
   reduce,
+  trim,
   zipWith,
 } from 'lodash-es';
 import { Path, PathValue } from 'react-hook-form';
@@ -132,9 +136,9 @@ export const zipWithIndex = <T extends object>(
   seq: readonly T[],
   start: number = 0,
 ): (T & { originalIndex: number })[] => {
-  return zipWith(seq, range(start, seq.length), (s, i) => ({
+  return zipWith(seq, range(0, seq.length), (s, i) => ({
     ...s,
-    originalIndex: i,
+    originalIndex: start + i,
   }));
 };
 
@@ -424,3 +428,8 @@ export const roundNearestMultiple = (num: number, multiple: number): number => {
 
   return Math.floor(num / multiple) * multiple;
 };
+
+export function isValidUrl(url: string) {
+  const sanitized = trim(url);
+  return isEmpty(sanitized) || !isError(attempt(() => new URL(sanitized)));
+}

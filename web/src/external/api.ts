@@ -35,7 +35,6 @@ import {
   deletePlexServerEndpoint,
   getFffmpegSettings,
   getHdhrSettings,
-  getPlexBackendStatus,
   getPlexServersEndpoint,
   getPlexStreamSettings,
   getSystemSettings,
@@ -66,7 +65,7 @@ export const api = makeApi([
     path: '/api/channels',
     alias: 'createChannel',
     status: 201,
-    response: z.object({ id: z.string() }),
+    response: ChannelSchema,
   },
   {
     method: 'put',
@@ -90,11 +89,27 @@ export const api = makeApi([
     path: '/api/channels/:id',
     parameters: parametersBuilder().addPath('id', z.string()).build(),
     response: ChannelSchema,
+    errors: makeErrors([
+      {
+        status: 404,
+        schema: BaseErrorSchema,
+      },
+      {
+        status: 500,
+        schema: BaseErrorSchema,
+      },
+    ]),
   },
   {
     method: 'get',
     path: '/api/channels/:id/programming',
-    parameters: parametersBuilder().addPath('id', z.string()).build(),
+    parameters: parametersBuilder()
+      .addPath('id', z.string())
+      .addQueries({
+        offset: z.number().optional(),
+        limit: z.number().optional(),
+      })
+      .build(),
     response: CondensedChannelProgrammingSchema,
   },
   {
@@ -246,6 +261,33 @@ export const api = makeApi([
     ]),
   },
   {
+    method: 'post',
+    path: '/api/plex-servers/foreignstatus',
+    alias: 'getUnknownPlexServerStatus',
+    parameters: parametersBuilder()
+      .addBody(
+        z.object({
+          name: z.string().optional(),
+          accessToken: z.string(),
+          uri: z.string(),
+        }),
+      )
+      .build(),
+    response: z.object({
+      healthy: z.boolean(),
+    }),
+    errors: makeErrors([
+      {
+        status: 404,
+        schema: BaseErrorSchema,
+      },
+      {
+        status: 500,
+        schema: BaseErrorSchema,
+      },
+    ]),
+  },
+  {
     method: 'get',
     path: '/api/jobs',
     alias: 'getTasks',
@@ -362,7 +404,6 @@ export const api = makeApi([
   createPlexServerEndpoint,
   updatePlexServerEndpoint,
   deletePlexServerEndpoint,
-  getPlexBackendStatus,
   getXmlTvSettings,
   updateXmlTvSettings,
   getHdhrSettings,

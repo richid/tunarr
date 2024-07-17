@@ -3,6 +3,7 @@ import { DefaultPlexHeaders } from '@tunarr/shared/constants';
 import {
   PlexDvr,
   PlexDvrsResponse,
+  PlexGenericMediaContainerResponseSchema,
   PlexMedia,
   PlexMediaContainerResponseSchema,
   PlexResource,
@@ -21,7 +22,6 @@ import {
   forEach,
   isEmpty,
   isError,
-  isNull,
   isString,
   isUndefined,
   map,
@@ -36,9 +36,8 @@ import {
   PlexMediaContainerResponse,
 } from '../types/plexApiTypes.js';
 import { Maybe, Try } from '../types/util.js';
+import { isDefined, isSuccess } from '../util/index.js';
 import { Logger, LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { isSuccess } from '../util/index.js';
-import { getEm } from '../dao/dataSource.js';
 
 type AxiosConfigWithMetadata = InternalAxiosRequestConfig & {
   metadata: {
@@ -46,13 +45,15 @@ type AxiosConfigWithMetadata = InternalAxiosRequestConfig & {
   };
 };
 
-type PlexApiOptions = MarkOptional<
+export type PlexApiOptions = MarkOptional<
   Pick<
     EntityDTO<PlexServerSettings>,
     'accessToken' | 'uri' | 'name' | 'clientIdentifier'
   >,
   'clientIdentifier'
->;
+> & {
+  enableRequestCache?: boolean;
+};
 
 type PlexQuerySuccessResult<T> = {
   type: 'success';
@@ -71,7 +72,9 @@ type PlexQueryErrorResult = {
   message?: string;
 };
 
-type PlexQueryResult<T> = PlexQuerySuccessResult<T> | PlexQueryErrorResult;
+export type PlexQueryResult<T> =
+  | PlexQuerySuccessResult<T>
+  | PlexQueryErrorResult;
 
 export function isPlexQueryError(
   x: PlexQueryResult<unknown>,
@@ -103,43 +106,63 @@ function makeSuccessResult<T>(data: T): PlexQuerySuccessResult<T> {
   };
 }
 
-class PlexApiFactoryImpl {
+class PlexQueryCache {
   #cache: NodeCache;
-
   constructor() {
     this.#cache = new NodeCache({
       useClones: false,
       deleteOnExpire: true,
       checkperiod: 60,
+      maxKeys: 2500,
+      stdTTL: 5 * 60 * 1000,
     });
   }
 
-  async getOrSet(name: string) {
-    let client = this.#cache.get<Plex>(name);
-    if (isUndefined(client)) {
-      const em = getEm();
-      const server = await em.repo(PlexServerSettings).findOne({ name });
-      if (!isNull(server)) {
-        client = new Plex(server);
-        this.#cache.set(server.name, client);
-      }
+  async getOrSet<T>(
+    serverName: string,
+    path: string,
+    getter: () => Promise<T>,
+  ): Promise<T> {
+    const key = this.getCacheKey(serverName, path);
+    const existing = this.#cache.get<T>(key);
+    if (isDefined(existing)) {
+      return existing;
     }
-    return client;
+
+    const value = await getter();
+    this.#cache.set(key, value);
+    return value;
   }
 
-  get(opts: PlexApiOptions) {
-    const key = `${opts.uri}|${opts.accessToken}`;
-    let client = this.#cache.get<Plex>(key);
-    if (!client) {
-      client = new Plex(opts);
-      this.#cache.set(key, client);
+  async getOrSetPlexResult<T>(
+    serverName: string,
+    path: string,
+    getter: () => Promise<PlexQueryResult<T>>,
+    opts?: { setOnError: boolean },
+  ): Promise<PlexQueryResult<T>> {
+    const key = this.getCacheKey(serverName, path);
+    const existing = this.#cache.get<PlexQueryResult<T>>(key);
+    if (isDefined(existing)) {
+      return existing;
     }
 
-    return client;
+    const value = await getter();
+    if (
+      isPlexQuerySuccess(value) ||
+      (isPlexQueryError(value) && opts?.setOnError)
+    ) {
+      this.#cache.set(key, value);
+    }
+
+    return value;
+  }
+
+  private getCacheKey(serverName: string, path: string) {
+    return `${serverName}|${path}`;
   }
 }
 
-export const PlexApiFactory = new PlexApiFactoryImpl();
+const PlexCache = new PlexQueryCache();
 
 export class Plex {
   private logger: Logger;
@@ -205,6 +228,13 @@ export class Plex {
     return this.opts.name;
   }
 
+  getFullUrl(path: string): string {
+    const sanitizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = new URL(`${this.opts.uri}${sanitizedPath}`);
+    url.searchParams.set('X-Plex-Token', this.opts.accessToken);
+    return url.toString();
+  }
+
   private async doRequest<T>(req: AxiosRequestConfig): Promise<Try<T>> {
     try {
       const response = await this.axiosInstance.request<T>(req);
@@ -250,48 +280,65 @@ export class Plex {
     }
   }
 
+  async doHead(path: string, optionalHeaders: RawAxiosRequestHeaders = {}) {
+    return await this.doRequest({
+      method: 'head',
+      url: path,
+      headers: optionalHeaders,
+    });
+  }
+
   // TODO: make all callers use this
   async doGetResult<T>(
     path: string,
     optionalHeaders: RawAxiosRequestHeaders = {},
+    skipCache: boolean = false,
   ): Promise<PlexQueryResult<PlexMediaContainer<T>>> {
-    const req: AxiosRequestConfig = {
-      method: 'get',
-      url: path,
-      headers: optionalHeaders,
-    };
+    const getter = async () => {
+      const req: AxiosRequestConfig = {
+        method: 'get',
+        url: path,
+        headers: optionalHeaders,
+      };
 
-    if (this.accessToken === '') {
-      throw new Error(
-        'No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.',
-      );
-    }
-
-    const res = await this.doRequest<PlexMediaContainerResponse<T>>(req);
-    if (isSuccess(res)) {
-      if (isUndefined(res?.MediaContainer)) {
-        this.logger.error(res, 'Expected MediaContainer, got %O', res);
-        return makeErrorResult('parse_error');
+      if (this.accessToken === '') {
+        throw new Error(
+          'No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.',
+        );
       }
 
-      return makeSuccessResult(res?.MediaContainer);
-    }
+      const res = await this.doRequest<PlexMediaContainerResponse<T>>(req);
+      if (isSuccess(res)) {
+        if (isUndefined(res?.MediaContainer)) {
+          this.logger.error(res, 'Expected MediaContainer, got %O', res);
+          return makeErrorResult('parse_error');
+        }
 
-    if (isAxiosError(res) && res.response?.status === 404) {
-      return makeErrorResult('not_found');
-    }
+        return makeSuccessResult(res?.MediaContainer);
+      }
 
-    return makeErrorResult('generic_request_error', res.message);
+      if (isAxiosError(res) && res.response?.status === 404) {
+        return makeErrorResult('not_found');
+      }
+
+      return makeErrorResult('generic_request_error', res.message);
+    };
+
+    return this.opts.enableRequestCache && !skipCache
+      ? await PlexCache.getOrSetPlexResult(this.opts.name, path, getter)
+      : await getter();
   }
 
   // We're just keeping the old contract here right now...
   async doGet<T>(
     path: string,
     optionalHeaders: RawAxiosRequestHeaders = {},
+    skipCache: boolean = false,
   ): Promise<Maybe<PlexMediaContainer<T>>> {
     const result = await this.doGetResult<PlexMediaContainer<T>>(
       path,
       optionalHeaders,
+      skipCache,
     );
     if (isPlexQuerySuccess(result)) {
       return result.data;
@@ -305,43 +352,47 @@ export class Plex {
     schema: T,
     extraConfig: Partial<AxiosRequestConfig> = {},
   ): Promise<PlexQueryResult<Out>> {
-    const req: AxiosRequestConfig = {
-      ...extraConfig,
-      method: 'get',
-      url: path,
+    const getter = async () => {
+      const req: AxiosRequestConfig = {
+        ...extraConfig,
+        method: 'get',
+        url: path,
+      };
+
+      if (isEmpty(this.accessToken)) {
+        return makeErrorResult(
+          'no_access_token',
+          'No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.',
+        );
+      }
+
+      const response = await this.doRequest<unknown>(req);
+
+      if (isError(response)) {
+        if (isAxiosError(response) && response.response?.status === 404) {
+          return makeErrorResult('not_found');
+        }
+        return makeErrorResult('generic_request_error', response.message);
+      }
+
+      const parsed = await schema.safeParseAsync(response);
+
+      if (parsed.success) {
+        return makeSuccessResult(parsed.data as Out);
+      }
+
+      this.logger.error(
+        parsed.error,
+        'Unable to parse schema from Plex response. Path: %s',
+        path,
+      );
+
+      return makeErrorResult('parse_error');
     };
 
-    if (isEmpty(this.accessToken)) {
-      return makeErrorResult(
-        'no_access_token',
-        'No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.',
-      );
-    }
-
-    const response = await this.doRequest<unknown>(req);
-
-    if (isError(response)) {
-      if (isAxiosError(response) && response.response?.status === 404) {
-        return makeErrorResult('not_found');
-      }
-      return makeErrorResult('generic_request_error', response.message);
-    }
-
-    const parsed = await schema.safeParseAsync(response);
-
-    if (parsed.success) {
-      return makeSuccessResult(parsed.data as Out);
-    }
-
-    this.logger.error(
-      parsed.error,
-      'Unable to parse schema from Plex response. Path: %s',
-      path,
-    );
-
-    return makeErrorResult('parse_error');
-
-    // if (isAxiosError(response) && response.res)
+    return this.opts.enableRequestCache
+      ? await PlexCache.getOrSetPlexResult(this.opts.name, path, getter)
+      : await getter();
   }
 
   async getItemMetadata(key: string): Promise<PlexQueryResult<PlexMedia>> {
@@ -410,10 +461,19 @@ export class Plex {
 
   async checkServerStatus() {
     try {
-      await this.doGet('/');
+      const result = await this.doTypeCheckedGet(
+        '/',
+        PlexGenericMediaContainerResponseSchema,
+      );
+      if (isPlexQueryError(result)) {
+        throw result;
+      } else if (isUndefined(result)) {
+        // Parse error - indicates that the URL is probably not a Plex server
+        return -1;
+      }
       return 1;
     } catch (err) {
-      console.error('Error getting Plex server status', err);
+      this.logger.error(err, 'Error getting Plex server status');
       return -1;
     }
   }
@@ -497,6 +557,10 @@ export class Plex {
       height: opts.height,
       upscale: opts.upscale,
     });
+  }
+
+  setEnableRequestCache(enable: boolean) {
+    this.opts.enableRequestCache = enable;
   }
 
   static getThumbUrl(opts: {

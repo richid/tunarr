@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { isUndefined, once } from 'lodash-es';
 import path from 'path';
-import { ChannelCache } from './stream/ChannelCache.js';
+import { XmlTvWriter } from './XmlTvWriter.js';
 import { ChannelDB } from './dao/channelDb.js';
 import { CustomShowDB } from './dao/customShowDb.js';
 import { FillerDB } from './dao/fillerDb.js';
@@ -15,23 +15,30 @@ import { EventService } from './services/eventService.js';
 import { FileCacheService } from './services/fileCacheService.js';
 import { M3uService } from './services/m3uService.js';
 import { TVGuideService } from './services/tvGuideService.js';
-import { XmlTvWriter } from './XmlTvWriter.js';
+import { ChannelCache } from './stream/ChannelCache.js';
+import { StreamProgramCalculator } from './stream/StreamProgramCalculator.js';
 
-export type ServerContext = {
-  channelDB: ChannelDB;
-  fillerDB: FillerDB;
-  fileCache: FileCacheService;
-  cacheImageService: CacheImageService;
-  m3uService: M3uService;
-  eventService: EventService;
-  guideService: TVGuideService;
-  hdhrService: HdhrService;
-  customShowDB: CustomShowDB;
-  channelCache: ChannelCache;
-  plexServerDB: PlexServerDB;
-  settings: SettingsDB;
-  programDB: ProgramDB;
-};
+export class ServerContext {
+  constructor(
+    public channelDB: ChannelDB,
+    public fillerDB: FillerDB,
+    public fileCache: FileCacheService,
+    public cacheImageService: CacheImageService,
+    public m3uService: M3uService,
+    public eventService: EventService,
+    public guideService: TVGuideService,
+    public hdhrService: HdhrService,
+    public customShowDB: CustomShowDB,
+    public channelCache: ChannelCache,
+    public plexServerDB: PlexServerDB,
+    public settings: SettingsDB,
+    public programDB: ProgramDB,
+  ) {}
+
+  streamProgramCalculator() {
+    return new StreamProgramCalculator(this.fillerDB, this.channelDB);
+  }
+}
 
 export const serverContext: () => ServerContext = once(() => {
   const opts = serverOptions();
@@ -56,7 +63,7 @@ export const serverContext: () => ServerContext = once(() => {
 
   const customShowDB = new CustomShowDB();
 
-  return {
+  return new ServerContext(
     channelDB,
     fillerDB,
     fileCache,
@@ -64,13 +71,13 @@ export const serverContext: () => ServerContext = once(() => {
     m3uService,
     eventService,
     guideService,
-    hdhrService: new HdhrService(settings),
+    new HdhrService(settings),
     customShowDB,
     channelCache,
-    plexServerDB: new PlexServerDB(channelDB),
+    new PlexServerDB(channelDB),
     settings,
-    programDB: new ProgramDB(),
-  };
+    new ProgramDB(),
+  );
 });
 
 export class ServerRequestContext {

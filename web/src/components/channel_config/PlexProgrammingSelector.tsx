@@ -6,6 +6,7 @@ import GridView from '@mui/icons-material/GridView';
 import ViewList from '@mui/icons-material/ViewList';
 import {
   Box,
+  CircularProgress,
   Collapse,
   Divider,
   Grow,
@@ -15,6 +16,7 @@ import {
   Tabs,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
 import {
   PlexMedia,
@@ -438,9 +440,11 @@ export default function PlexProgrammingSelector() {
 
   const renderFinalRowInlineModal = (arr: PlexMedia[]) => {
     // /This Modal is for last row items because they can't be inserted using the above inline modal
-    const open = extractLastIndexes(arr, arr.length % rowSize).includes(
-      modalIndex,
-    );
+    // Check how many items are in the last row
+    const remainingItems =
+      arr.length % rowSize === 0 ? rowSize : arr.length % rowSize;
+
+    const open = extractLastIndexes(arr, remainingItems).includes(modalIndex);
 
     return (
       <InlineModal
@@ -509,13 +513,14 @@ export default function PlexProgrammingSelector() {
       );
     }
 
-    if (searchData) {
+    if (searchData && (first(searchData.pages)?.size ?? 0) > 0) {
       const items = chain(searchData.pages)
-        .reject((page) => page.size === 0)
         .map((page) => page.Metadata)
         .flatten()
-        .take(scrollParams.limit)
         .value();
+
+      const totalSearchDataSize =
+        searchData.pages[0].totalSize || searchData.pages[0].size;
 
       elements.push(
         <CustomTabPanel value={tabValue} index={0} key="Library">
@@ -528,7 +533,9 @@ export default function PlexProgrammingSelector() {
                 renderGridItems(item, index)
               ),
           )}
-          {renderFinalRowInlineModal(items)}
+
+          {items.length >= totalSearchDataSize &&
+            renderFinalRowInlineModal(items)}
         </CustomTabPanel>,
       );
     }
@@ -653,11 +660,21 @@ export default function PlexProgrammingSelector() {
                 )}
             </Tabs>
           </Box>
-
           <Box ref={gridContainerRef} sx={{ width: '100%' }}>
             {renderListItems()}
           </Box>
           {!searchLoading && <div style={{ height: 96 }} ref={ref}></div>}
+          {isFetchingNextItemsPage && (
+            <CircularProgress
+              color="primary"
+              sx={{ display: 'block', margin: '2em auto' }}
+            />
+          )}
+          {searchData && !hasNextItemsPage && (
+            <Typography fontStyle={'italic'} sx={{ textAlign: 'center' }}>
+              fin.
+            </Typography>
+          )}
           <Divider sx={{ mt: 3, mb: 2 }} />
         </>
       )}

@@ -1,5 +1,4 @@
 import {
-  Cascade,
   Collection,
   Entity,
   ManyToOne,
@@ -9,6 +8,9 @@ import {
 import { BaseEntity } from './BaseEntity.js';
 import { Program } from './Program.js';
 import { ProgramGroupingExternalId } from './ProgramGroupingExternalId.js';
+import { Maybe } from '../../types/util.js';
+import { find } from 'lodash-es';
+import { enumKeys } from '../../util/enumUtil.js';
 
 /**
  * A ProgramGrouping represents some logical collection of Programs.
@@ -54,7 +56,7 @@ export class ProgramGrouping extends BaseEntity {
   @OneToMany(() => Program, (p) => p.season)
   seasonEpisodes = new Collection<Program>(this);
 
-  @OneToMany(() => Program, (p) => p.tvShow, { cascade: [Cascade.PERSIST] })
+  @OneToMany(() => Program, (p) => p.tvShow)
   showEpisodes = new Collection<Program>(this);
 
   @OneToMany(() => Program, (p) => p.album)
@@ -73,4 +75,17 @@ export enum ProgramGroupingType {
   TvShowSeason = 'season',
   MusicArtist = 'artist',
   MusicAlbum = 'album',
+}
+
+export function programGroupingTypeForString(
+  s: string,
+): Maybe<ProgramGroupingType> {
+  const key = find(
+    enumKeys(ProgramGroupingType),
+    (key) => ProgramGroupingType[key].toString() === s,
+  );
+  if (key) {
+    return ProgramGroupingType[key];
+  }
+  return;
 }

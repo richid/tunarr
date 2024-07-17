@@ -1,6 +1,14 @@
-import { EntityDTO, Loaded, wrap } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import constants from '@tunarr/shared/constants';
-import { find, first, isNil, isNull, isUndefined, pick } from 'lodash-es';
+import {
+  find,
+  first,
+  isEmpty,
+  isNil,
+  isNull,
+  isUndefined,
+  pick,
+} from 'lodash-es';
 import { ProgramExternalIdType } from '../dao/custom_types/ProgramExternalIdType.js';
 import { getEm } from '../dao/dataSource.js';
 import {
@@ -16,14 +24,18 @@ import {
 } from '../dao/derived_types/StreamLineup.js';
 import { Channel } from '../dao/entities/Channel.js';
 import { Program as ProgramEntity } from '../dao/entities/Program.js';
-import { getServerContext } from '../serverContext.js';
+import {
+  ProgramType,
+  Program as RawProgramEntity,
+} from '../dao/direct/derivedTypes';
 import { FillerPicker } from '../services/FillerPicker.js';
 import { Nullable } from '../types/util.js';
 import { binarySearchRange } from '../util/binarySearch.js';
 import { isNonEmptyString, zipWithIndex } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
-import { random } from '../util/random.js';
 import { STREAM_CHANNEL_CONTEXT_KEYS, StreamContextChannel } from './types.js';
+import { FillerDB } from '../dao/fillerDb.js';
+import { ChannelDB } from '../dao/channelDb.js';
 
 const SLACK = constants.SLACK;
 
@@ -44,13 +56,25 @@ export function generateChannelContext(
   );
 }
 
+// Taking advantage of structural typing for transition
+// to Kysely querying...
+type MinimalChannelDetails = {
+  startTime: number;
+  duration: number;
+};
+
 export class StreamProgramCalculator {
   private logger = LoggerFactory.child({ caller: import.meta });
+
+  constructor(
+    private fillerDB: FillerDB,
+    private channelDB: ChannelDB,
+  ) {}
 
   // This code is almost identical to TvGuideService#getCurrentPlayingIndex
   async getCurrentProgramAndTimeElapsed(
     timestamp: number,
-    channel: Loaded<Channel>,
+    channel: MinimalChannelDetails,
     channelLineup: Lineup,
   ): Promise<ProgramAndTimeElapsed> {
     if (channel.startTime > timestamp) {
@@ -206,7 +230,6 @@ export class StreamProgramCalculator {
   async createLineupItem(
     obj: ProgramAndTimeElapsed,
     channel: Loaded<Channel>,
-    isFirst: boolean,
   ): Promise<StreamLineupItem> {
     let timeElapsed = obj.timeElapsed;
     // Start time of a file is never consistent unless 0. Run time of an episode can vary.
@@ -232,23 +255,26 @@ export class StreamProgramCalculator {
       //offline case
       let remaining = activeProgram.duration - timeElapsed;
       //look for a random filler to play
-      const fillerPrograms =
-        await getServerContext().fillerDB.getFillersFromChannel(channel.uuid);
+      const fillerPrograms = await this.fillerDB.getFillersFromChannel(
+        channel.uuid,
+      );
 
-      let filler: Nullable<EntityDTO<ProgramEntity>>;
-      let fallbackProgram: Nullable<EntityDTO<ProgramEntity>> = null;
+      let filler: Nullable<RawProgramEntity>;
+      let fallbackProgram: Nullable<RawProgramEntity> = null;
 
       // See if we have any fallback programs set
-      await channel.fallback.init();
-      if (channel.offline.mode === 'clip' && channel.fallback?.length != 0) {
-        fallbackProgram = wrap(first(channel.fallback)!).toJSON();
+      const fallbackPrograms = await this.channelDB.getChannelFallbackPrograms(
+        channel.uuid,
+      );
+      if (channel.offline.mode === 'clip' && !isEmpty(fallbackPrograms)) {
+        fallbackProgram = first(fallbackPrograms)!;
       }
 
       // Pick a random filler, too
       const randomResult = new FillerPicker().pickRandomWithMaxDuration(
         channel,
         fillerPrograms,
-        remaining + (isFirst ? 7 * 24 * 60 * 60 * 1000 : 0),
+        remaining,
       );
       filler = randomResult.filler;
 
@@ -274,17 +300,6 @@ export class StreamProgramCalculator {
           } else {
             fillerstart = 0;
           }
-
-          // Otherwise, if we're dealing with the first item in the lineup,
-        } else if (isFirst) {
-          fillerstart = Math.max(0, filler.duration - remaining);
-          //it's boring and odd to tune into a channel and it's always
-          //the start of a commercial.
-          const more = Math.max(
-            0,
-            filler.duration - fillerstart - 15000 - SLACK,
-          );
-          fillerstart += random.integer(0, more);
         }
 
         return {
@@ -303,7 +318,7 @@ export class StreamProgramCalculator {
           beginningOffset: beginningOffset,
           externalSourceId: filler.externalSourceId,
           plexFilePath: filler.plexFilePath!,
-          programType: filler.type,
+          programType: filler.type as ProgramType,
         };
       }
       // pick the offline screen

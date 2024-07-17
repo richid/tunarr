@@ -8,7 +8,6 @@ import {
 } from '@mikro-orm/core';
 import { Channel as ChannelDTO } from '@tunarr/types';
 import { type Tag } from '@tunarr/types';
-import { nilToUndefined } from '../../util/index.js';
 import { BaseEntity } from './BaseEntity.js';
 import { ChannelFillerShow } from './ChannelFillerShow.js';
 import { CustomShow } from './CustomShow.js';
@@ -39,9 +38,9 @@ const ChannelIconSchema = z
     position: 'bottom-right',
   });
 
-const DefaultChannelIcon = ChannelIconSchema.parse({});
+export const DefaultChannelIcon = ChannelIconSchema.parse({});
 
-type ChannelIcon = z.infer<typeof ChannelIconSchema>;
+export type ChannelIcon = z.infer<typeof ChannelIconSchema>;
 
 class ChannelIconType extends SchemaBackedDbType<typeof ChannelIconSchema> {
   constructor() {
@@ -84,9 +83,10 @@ const ChannelWatermarkSchema = z.object({
   duration: z.number().nonnegative().catch(0),
   fixedSize: z.boolean().optional().catch(undefined),
   animated: z.boolean().optional().catch(undefined),
+  opacity: z.number().min(0).max(100).int().optional().catch(100).default(100),
 });
 
-type ChannelWatermark = z.infer<typeof ChannelWatermarkSchema>;
+export type ChannelWatermark = z.infer<typeof ChannelWatermarkSchema>;
 
 class ChannelWatermarkType extends SchemaBackedDbType<
   typeof ChannelWatermarkSchema
@@ -106,7 +106,9 @@ const DefaultChannelOfflineSettingsSchema = ChannelOfflineSettingsSchema.parse(
   {},
 );
 
-type ChannelOfflineSettings = z.infer<typeof ChannelOfflineSettingsSchema>;
+export type ChannelOfflineSettings = z.infer<
+  typeof ChannelOfflineSettingsSchema
+>;
 
 class ChannelOfflineSettingsType extends SchemaBackedDbType<
   typeof ChannelOfflineSettingsSchema
@@ -216,25 +218,4 @@ export class Channel extends BaseEntity {
 
   @ManyToMany(() => Program)
   fallback = new Collection<Program>(this);
-
-  toDTO(): ChannelDTO {
-    return {
-      id: this.uuid,
-      number: this.number,
-      watermark: nilToUndefined(this.watermark),
-      // filler
-      // programs
-      // fallback
-      icon: this.icon ?? DefaultChannelIcon,
-      guideMinimumDuration: this.guideMinimumDuration,
-      groupTitle: this.groupTitle || '',
-      disableFillerOverlay: this.disableFillerOverlay,
-      startTime: this.startTime,
-      offline: this.offline,
-      name: this.name,
-      transcoding: nilToUndefined(this.transcoding),
-      duration: this.duration,
-      stealth: this.stealth,
-    };
-  }
 }

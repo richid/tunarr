@@ -1,4 +1,4 @@
-import { DataTag, useQueries, useQuery } from '@tanstack/react-query';
+import { DataTag, useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import { Channel, CondensedChannelProgramming } from '@tunarr/types';
 import { channelQuery } from './useChannels.ts';
 import { ApiClient } from '../external/api.ts';
@@ -7,7 +7,8 @@ import { useTunarrApi } from './useTunarrApi.ts';
 export const channelProgrammingQuery = (
   apiClient: ApiClient,
   id: string,
-  enabled: boolean,
+  enabled: boolean = true,
+  pageParams: { offset: number; limit: number } | undefined = undefined,
 ) => {
   return {
     queryKey: ['channels', id, 'programming'] as DataTag<
@@ -17,6 +18,7 @@ export const channelProgrammingQuery = (
     queryFn: async () =>
       apiClient.get('/api/channels/:id/programming', {
         params: { id },
+        queries: pageParams,
       }),
     enabled: id.length > 0 && enabled,
   };
@@ -33,7 +35,7 @@ export const useChannelAndProgramming = (
   initialData?: { channel?: Channel; lineup?: CondensedChannelProgramming },
 ) => {
   const apiClient = useTunarrApi();
-  return useQueries({
+  return useSuspenseQueries({
     queries: [
       {
         ...channelQuery(apiClient, id, enabled),
