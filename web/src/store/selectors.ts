@@ -7,6 +7,7 @@ const materializeProgramList = (
   lineup: (CondensedChannelProgram & UIIndex)[],
   programLookup: Record<string, ContentProgram>,
 ): UIChannelProgram[] => {
+  console.log(programLookup, lineup);
   // TODO: Use the offsets from the network call
   let offset = 0;
   return chain(lineup)

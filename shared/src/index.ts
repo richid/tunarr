@@ -1,11 +1,12 @@
-import { ExternalId, SingleExternalId, MultiExternalId } from '@tunarr/types';
+import { ExternalId, MultiExternalId, SingleExternalId } from '@tunarr/types';
 import { PlexMedia } from '@tunarr/types/plex';
 import {
   SingleExternalIdType,
   type ExternalIdType,
 } from '@tunarr/types/schemas';
-export { scheduleRandomSlots } from './services/randomSlotsService.js';
-export { scheduleTimeSlots } from './services/timeSlotService.js';
+export { ProgramMinter } from './services/ProgramMinter.js';
+export { scheduleRandomSlots } from './services/RandomSlotsService.js';
+export { scheduleTimeSlots } from './services/TimeSlotService.js';
 export { mod as dayjsMod } from './util/dayjsExtensions.js';
 
 // TODO replace first arg with shared type

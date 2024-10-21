@@ -350,6 +350,8 @@ export default function ChannelProgrammingList(props: Props) {
     ((UIFlexProgram | UIRedirectProgram) & { index: number }) | undefined
   >();
 
+  console.log(programList);
+
   const findProgram = useCallback(
     (originalIndex: number) => {
       return { index: findIndex(programList, { originalIndex }) };

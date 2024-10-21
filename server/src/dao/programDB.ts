@@ -7,7 +7,6 @@ import {
 } from '@tunarr/types';
 import { JellyfinItem } from '@tunarr/types/jellyfin';
 import { PlexEpisode, PlexMusicTrack } from '@tunarr/types/plex';
-import { ContentProgramOriginalProgram } from '@tunarr/types/schemas';
 import dayjs from 'dayjs';
 import { CaseWhenBuilder } from 'kysely';
 import {
@@ -15,7 +14,6 @@ import {
   concat,
   difference,
   filter,
-  find,
   flatMap,
   forEach,
   groupBy,
@@ -33,7 +31,6 @@ import {
   uniqBy,
 } from 'lodash-es';
 import { MarkOptional, MarkRequired } from 'ts-essentials';
-import { P, match } from 'ts-pattern';
 import { v4 } from 'uuid';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { ReconcileProgramDurationsTask } from '../tasks/ReconcileProgramDurationsTask.js';
@@ -91,7 +88,7 @@ import { upsertRawProgramExternalIds } from './programExternalIdHelpers.js';
 
 type ValidatedContentProgram = MarkRequired<
   ContentProgram,
-  'originalProgram' | 'externalSourceName' | 'externalSourceType'
+  'externalSourceName' | 'externalSourceType'
 >;
 
 type MintedRawProgramInfo = {
@@ -103,6 +100,13 @@ type MintedRawProgramInfo = {
 type NonMovieOriginalProgram =
   | { sourceType: 'plex'; program: PlexEpisode | PlexMusicTrack }
   | { sourceType: 'jellyfin'; program: JellyfinItem };
+
+type ContentProgramWithHierarchy = Omit<
+  MarkRequired<ContentProgram, 'grandparent' | 'parent'>,
+  'subtype'
+> & {
+  subtype: 'episode' | 'track';
+};
 
 type ProgramRelationCaseBuilder = CaseWhenBuilder<
   DB,
@@ -342,10 +346,11 @@ export class ProgramDB {
     const [contentPrograms, invalidPrograms] = partition(
       uniqBy(filter(nonPersisted, isContentProgram), (p) => p.uniqueId),
       (p): p is ValidatedContentProgram =>
-        !isNil(p.externalSourceType) &&
-        !isNil(p.externalSourceName) &&
-        !isNil(p.originalProgram) &&
+        isNonEmptyString(p.externalSourceType) &&
+        isNonEmptyString(p.externalSourceName) &&
+        isNonEmptyString(p.externalKey) &&
         p.duration > 0,
+      // !isNil(p.originalProgram) &&
     );
 
     if (!isEmpty(invalidPrograms)) {
@@ -455,11 +460,11 @@ export class ProgramDB {
     const programsToPersist: MintedRawProgramInfo[] = map(
       contentPrograms,
       (p) => {
-        const program = minter.mint(p.externalSourceName, p.originalProgram);
+        const program = minter.contentProgramDtoToDao(p);
         const externalIds = minter.mintRawExternalIds(
           p.externalSourceName,
           program.uuid,
-          p.originalProgram,
+          p,
         );
         return { program, externalIds, apiProgram: p };
       },
@@ -626,7 +631,13 @@ export class ProgramDB {
     const grandparentRatingKeyToProgramId: Record<string, Set<string>> = {};
     const parentRatingKeyToProgramId: Record<string, Set<string>> = {};
 
-    const relevantPrograms = seq.collect(upsertedPrograms, (program) => {
+    const relevantPrograms: [
+      RawProgram,
+      ContentProgramWithHierarchy & {
+        grandparentKey: string;
+        parentKey: string;
+      },
+    ][] = seq.collect(upsertedPrograms, (program) => {
       if (program.type === ProgramType.Movie) {
         return;
       }
@@ -636,44 +647,48 @@ export class ProgramDB {
         return;
       }
 
-      const originalProgram = info.apiProgram.originalProgram;
+      // const program = info.apiProgram;
 
-      if (originalProgram.sourceType !== mediaSourceType) {
+      // if (originalProgram.sourceType !== mediaSourceType) {
+      //   return;
+      // }
+
+      if (info.apiProgram.subtype === 'movie') {
         return;
       }
 
-      if (isMovieMediaItem(originalProgram)) {
-        return;
-      }
+      const [grandparentKey, parentKey] = [
+        info.apiProgram.grandparent?.externalKey,
+        info.apiProgram.parent?.externalKey,
+      ];
 
-      const [grandparentKey, parentKey] = match(originalProgram)
-        .with(
-          {
-            sourceType: 'plex',
-            program: { type: P.union('episode', 'track') },
-          },
-          ({ program: ep }) =>
-            [ep.grandparentRatingKey, ep.parentRatingKey] as const,
-        )
-        .with(
-          { sourceType: 'jellyfin', program: { Type: 'Episode' } },
-          ({ program: ep }) =>
-            [ep.SeriesId, ep.ParentId ?? ep.SeasonId] as const,
-        )
-        .with(
-          { sourceType: 'jellyfin', program: { Type: 'Audio' } },
-          ({ program: ep }) =>
-            [
-              find(ep.AlbumArtists, { Name: ep.AlbumArtist })?.Id,
-              ep.ParentId ?? ep.AlbumId,
-            ] as const,
-        )
-        .otherwise(() => [null, null] as const);
+      // const [grandparentKey, parentKey] = match(info.apiProgram)
+      //   .with(
+      //     {
+      //       externalSourceType: 'plex',
+      //       subtype: P.union('episode', 'track'),
+      //     },
+      //     ({ program: ep }) =>
+      //       [ep.grandparentRatingKey, ep.parentRatingKey] as const,
+      //   )
+      //   .with(
+      //     { sourceType: 'jellyfin', program: { Type: 'Episode' } },
+      //     ({ program: ep }) => [ep.SeriesId, ep.ParentId] as const,
+      //   )
+      //   .with(
+      //     { sourceType: 'jellyfin', program: { Type: 'Audio' } },
+      //     ({ program: ep }) =>
+      //       [
+      //         find(ep.AlbumArtists, { Name: ep.AlbumArtist })?.Id,
+      //         ep.ParentId,
+      //       ] as const,
+      //   )
+      //   .otherwise(() => [null, null] as const);
 
       if (!grandparentKey || !parentKey) {
         this.logger.warn(
           'Unexpected null/empty parent keys: %O',
-          originalProgram,
+          info.apiProgram,
         );
         return;
       }
@@ -681,7 +696,7 @@ export class ProgramDB {
       return [
         program,
         {
-          ...(originalProgram as NonMovieOriginalProgram),
+          ...(info.apiProgram as ContentProgramWithHierarchy),
           grandparentKey,
           parentKey,
         },
@@ -1075,11 +1090,4 @@ export class ProgramDB {
       );
     });
   }
-}
-
-function isMovieMediaItem(item: ContentProgramOriginalProgram): boolean {
-  return match(item)
-    .with({ sourceType: 'plex', program: { type: 'movie' } }, () => true)
-    .with({ sourceType: 'jellyfin', program: { Type: 'Movie' } }, () => true)
-    .otherwise(() => false);
 }
