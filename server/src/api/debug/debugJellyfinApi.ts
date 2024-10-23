@@ -1,8 +1,8 @@
 import { isNil } from 'lodash-es';
-import { JellyfinApiClient } from '../../external/jellyfin/JellyfinApiClient';
-import { RouterPluginAsyncCallback } from '../../types/serverType';
 import { z } from 'zod';
+import { JellyfinApiClient } from '../../external/jellyfin/JellyfinApiClient';
 import { Nilable } from '../../types/util';
+import type { RouterPluginAsyncCallback } from '../types/serverType';
 
 export const DebugJellyfinApiRouter: RouterPluginAsyncCallback = async (
   fastify,

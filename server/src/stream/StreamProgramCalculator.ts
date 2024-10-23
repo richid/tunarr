@@ -16,8 +16,8 @@ import {
   StreamLineupItem,
   createOfflineStreamLineupItem,
 } from '../dao/derived_types/StreamLineup.js';
-import { ProgramWithRelations as RawProgramEntity } from '../dao/direct/derivedTypes';
-import { Channel } from '../dao/direct/schema/Channel.js';
+import type { ProgramWithRelations as RawProgramEntity } from '../dao/direct/derivedTypes';
+import type { Channel } from '../dao/direct/schema/Channel.js';
 import { MediaSourceType } from '../dao/entities/MediaSource.js';
 import { Program as ProgramEntity } from '../dao/entities/Program.js';
 import { ProgramExternalId } from '../dao/entities/ProgramExternalId.js';

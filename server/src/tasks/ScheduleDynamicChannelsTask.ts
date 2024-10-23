@@ -1,12 +1,12 @@
 import { Loaded } from '@mikro-orm/core';
 import { DynamicContentConfigSource } from '@tunarr/types/api';
-import filter from 'lodash-es/filter';
+import filter from 'npm:lodash-es/filter.js';
 import { ChannelDB } from '../dao/channelDb';
 import { Channel } from '../dao/entities/Channel';
-import { ScheduledTask } from './ScheduledTask';
 import { ContentSourceUpdaterFactory } from '../services/dynamic_channels/ContentSourceUpdaterFactory';
 import { GlobalScheduler } from '../services/scheduler';
 import { Maybe } from '../types/util';
+import { ScheduledTask } from './ScheduledTask';
 import { Task, TaskId } from './Task';
 
 export class ScheduleDynamicChannelsTask extends Task<void> {

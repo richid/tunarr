@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
-import { Writable } from 'stream';
+import { spawn } from 'node:child_process';
+import { Writable } from 'node:stream';
 import { SettingsDB, getSettings } from '../dao/settings.js';
 import { Result } from '../types/result.js';
 import { isNonEmptyString } from '../util/index.js';

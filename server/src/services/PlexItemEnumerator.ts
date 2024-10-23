@@ -8,14 +8,14 @@ import {
   isTerminalItem,
 } from '@tunarr/types/plex';
 import { flatten, isNil, uniqBy } from 'lodash-es';
-import map from 'lodash-es/map';
+import map from 'npm:lodash-es/map';
 import { ProgramDB } from '../dao/programDB';
 import { PlexApiClient } from '../external/plex/PlexApiClient';
 import { typedProperty } from '../types/path';
+import { asyncPool, unfurlPool } from '../util/asyncPool';
 import { flatMapAsyncSeq, wait } from '../util/index.js';
 import { Logger, LoggerFactory } from '../util/logging/LoggerFactory';
 import { Timer } from '../util/perf';
-import { asyncPool, unfurlPool } from '../util/asyncPool';
 
 export type EnrichedPlexTerminalMedia = PlexTerminalMedia & {
   id?: string;

@@ -21,7 +21,7 @@ import { dbChannelToApiChannel } from '../dao/converters/channelConverters.js';
 import { ProgramConverter } from '../dao/converters/programConverters.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { attempt, mapAsyncSeq } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 import { timeNamedAsync } from '../util/perf.js';

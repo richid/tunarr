@@ -1,17 +1,16 @@
 import { EverySchedule } from '@tunarr/types/schemas';
-import {
+import dayjs from 'dayjs';
+import { range, reduce } from 'lodash-es';
+import parser, {
   CronFields,
   DayOfTheMonthRange,
   HourRange,
   SixtyRange,
-} from 'cron-parser';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import { range, reduce } from 'lodash-es';
-import { run } from '.';
-import CronExpression from 'cron-parser/lib/expression';
-import parser from 'cron-parser';
+} from 'npm:cron-parser';
+import CronExpression from 'npm:cron-parser/lib/expression.js';
+import duration from 'npm:dayjs/plugin/duration';
 import { TupleToUnion } from '../types/util';
+import { run } from './index.ts';
 
 dayjs.extend(duration);
 
@@ -50,7 +49,7 @@ const defaultCronFields: CronFields = run(() => {
       };
     },
     {} as Partial<CronFields>,
-  ) as Required<CronFields>;
+  );
 });
 
 export function parseEveryScheduleRule(schedule: EverySchedule) {

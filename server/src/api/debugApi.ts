@@ -12,7 +12,7 @@ import { MediaSourceType } from '../dao/entities/MediaSource.js';
 import { LineupCreator } from '../services/dynamic_channels/LineupCreator.js';
 import { PlexTaskQueue } from '../tasks/TaskQueue.js';
 import { SavePlexProgramExternalIdsTask } from '../tasks/plex/SavePlexProgramExternalIdsTask.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { enumValues } from '../util/enumUtil.js';
 import { ifDefined, mapAsyncSeq } from '../util/index.js';
 import { DebugJellyfinApiRouter } from './debug/debugJellyfinApi.js';

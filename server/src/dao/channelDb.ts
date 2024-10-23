@@ -46,10 +46,10 @@ import ld, {
 } from 'lodash-es';
 import { Low } from 'lowdb';
 import fs from 'node:fs/promises';
-import { join } from 'path';
+import { join } from 'node:path';
 import { MarkOptional, MarkRequired } from 'ts-essentials';
 import { match } from 'ts-pattern';
-import { ChannelWithPrograms as RawChannelWithPrograms } from '../dao/direct/derivedTypes.js';
+import type { ChannelWithPrograms as RawChannelWithPrograms } from '../dao/direct/derivedTypes.d.ts';
 import { globalOptions } from '../globals.js';
 import { serverContext } from '../serverContext.js';
 import { typedProperty } from '../types/path.js';
@@ -99,7 +99,6 @@ import { ChannelFillerShow } from './entities/ChannelFillerShow.js';
 import { FillerShow, FillerShowId } from './entities/FillerShow.js';
 import { Program } from './entities/Program.js';
 import { ProgramDB } from './programDB.js';
-
 dayjs.extend(duration);
 
 // We use this to chunk super huge channel / program relation updates because

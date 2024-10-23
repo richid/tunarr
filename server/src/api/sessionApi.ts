@@ -3,7 +3,7 @@ import { isEmpty, isNil, isNumber, map } from 'lodash-es';
 import z from 'zod';
 import { SessionType } from '../stream/Session';
 import { SessionKey } from '../stream/SessionManager';
-import { RouterPluginAsyncCallback } from '../types/serverType';
+import type { RouterPluginAsyncCallback } from '../types/serverType';
 import { run } from '../util';
 
 // eslint-disable-next-line @typescript-eslint/require-await

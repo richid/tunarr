@@ -18,11 +18,11 @@ import {
   PlexStreamSettingsSchema,
   XmlTvSettingsSchema,
 } from '@tunarr/types/schemas';
-import events from 'events';
 import { merge } from 'lodash-es';
 import { Low, LowSync } from 'lowdb';
+import events from 'node:events';
 import { existsSync } from 'node:fs';
-import path from 'path';
+import path from 'node:path';
 import { DeepPartial, DeepReadonly } from 'ts-essentials';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';

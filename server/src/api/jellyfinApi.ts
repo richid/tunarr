@@ -7,7 +7,7 @@ import {
   JellyfinLibraryItemsResponse,
   type JellyfinLibraryItemsResponse as JellyfinLibraryItemsResponseTyp,
 } from '@tunarr/types/jellyfin';
-import { FastifyReply } from 'fastify/types/reply.js';
+import type { FastifyReply } from 'fastify/types/reply.js';
 import { filter, isEmpty, isNull, uniq } from 'lodash-es';
 import { z } from 'zod';
 import { MediaSource, MediaSourceType } from '../dao/entities/MediaSource.js';
@@ -15,7 +15,7 @@ import { isQueryError } from '../external/BaseApiClient.js';
 import { MediaSourceApiFactory } from '../external/MediaSourceApiFactory.js';
 import { JellyfinApiClient } from '../external/jellyfin/JellyfinApiClient.js';
 import { TruthyQueryParam } from '../types/schemas.js';
-import {
+import type {
   RouterPluginCallback,
   ZodFastifyRequest,
 } from '../types/serverType.js';

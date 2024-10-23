@@ -20,7 +20,7 @@ import { ChannelCache } from '../stream/ChannelCache.js';
 import { isNonEmptyString, mapAsyncSeq } from '../util/index.js';
 import { ProgramConverter } from './converters/programConverters.js';
 import { getEm } from './dataSource.js';
-import { ChannelFillerShowWithContent } from './direct/derivedTypes.js';
+import type { ChannelFillerShowWithContent } from './direct/derivedTypes.js';
 import { directDbAccess } from './direct/directDbAccess.js';
 import { withFillerPrograms } from './direct/programQueryHelpers.js';
 import { programExternalIdString } from './direct/schema/Program.js';

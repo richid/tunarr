@@ -4,8 +4,8 @@ import type {
 } from '@mikro-orm/better-sqlite'; // or any other driver package
 import { MikroORM } from '@mikro-orm/better-sqlite';
 import { CreateContextOptions, RequestContext } from '@mikro-orm/core';
-import fs from 'fs';
 import { isUndefined, once } from 'lodash-es';
+import fs from 'node:fs';
 import 'reflect-metadata';
 import { dbOptions } from '../globals.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';

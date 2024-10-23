@@ -14,7 +14,6 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
-import { RouteOptions } from 'fastify/types/route.js';
 import {
   isArray,
   isNumber,
@@ -25,7 +24,8 @@ import {
 } from 'lodash-es';
 import schedule from 'node-schedule';
 import fs from 'node:fs/promises';
-import path, { dirname } from 'path';
+import path, { dirname } from 'node:path';
+import { RouteOptions } from 'npm:fastify/types/route.js';
 import { HdhrApiRouter } from './api/hdhrApi.js';
 import { apiRouter } from './api/index.js';
 import { streamApi } from './api/streamApi.js';

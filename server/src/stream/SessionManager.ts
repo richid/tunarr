@@ -8,7 +8,7 @@ import {
   values,
 } from 'lodash-es';
 import { ChannelDB } from '../dao/channelDb.js';
-import { Channel } from '../dao/direct/schema/Channel.js';
+import type { Channel } from '../dao/direct/schema/Channel.js';
 import {
   ChannelNotFoundError,
   GenericError,

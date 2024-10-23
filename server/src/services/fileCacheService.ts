@@ -1,6 +1,6 @@
-import { promises as fs } from 'fs';
 import NodeCache from 'node-cache';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { serverOptions } from '../globals';
 import { fileExists } from '../util/fsUtil.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';

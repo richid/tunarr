@@ -11,10 +11,10 @@ import pino, {
 } from 'pino';
 import pretty, { PrettyOptions } from 'pino-pretty';
 import type ThreadStream from 'thread-stream';
-import { isNonEmptyString, isProduction } from '..';
 import { SettingsDB, getSettings } from '../../dao/settings';
 import { Maybe, TupleToUnion } from '../../types/util';
 import { getDefaultLogLevel } from '../defaults';
+import { isNonEmptyString, isProduction } from '../index';
 
 export const LogConfigEnvVars = {
   level: 'LOG_LEVEL',

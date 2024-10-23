@@ -6,9 +6,9 @@ import {
 import dayjs from 'dayjs';
 import { Duration } from 'dayjs/plugin/duration.js';
 import { first, isEmpty, isNil, isUndefined, merge, round } from 'lodash-es';
-import path from 'path';
+import path from 'node:path';
 import { DeepReadonly, DeepRequired } from 'ts-essentials';
-import { Channel } from '../dao/direct/schema/Channel';
+import type { Channel } from '../dao/direct/schema/Channel';
 import { serverOptions } from '../globals.js';
 import { ConcatSessionType } from '../stream/Session.js';
 import { StreamDetails, StreamSource } from '../stream/types.js';

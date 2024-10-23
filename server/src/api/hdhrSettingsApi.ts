@@ -3,7 +3,7 @@ import { BaseErrorSchema } from '@tunarr/types/api';
 import { HdhrSettingsSchema } from '@tunarr/types/schemas';
 import { isError } from 'lodash-es';
 import { DeepWritable } from 'ts-essentials';
-import { RouterPluginCallback } from '../types/serverType.js';
+import type { RouterPluginCallback } from '../types/serverType.js';
 import { firstDefined } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 

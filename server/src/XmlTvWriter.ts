@@ -6,9 +6,9 @@ import {
 import { forProgramType } from '@tunarr/shared/util';
 import { TvGuideProgram, isContentProgram } from '@tunarr/types';
 import { Mutex } from 'async-mutex';
-import { writeFile } from 'fs/promises';
 import { escape, flatMap, isNil, map, round } from 'lodash-es';
-import { Channel } from './dao/direct/schema/Channel';
+import { writeFile } from 'node:fs/promises';
+import type { Channel } from './dao/direct/schema/Channel';
 import { SettingsDB, getSettings } from './dao/settings';
 import { ChannelPrograms } from './services/tvGuideService';
 import { isNonEmptyString } from './util';

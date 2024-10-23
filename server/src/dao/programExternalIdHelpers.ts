@@ -13,7 +13,7 @@ import { groupByUniq, mapAsyncSeq } from '../util';
 import { LoggerFactory } from '../util/logging/LoggerFactory';
 import { getEm } from './dataSource';
 import { directDbAccess } from './direct/directDbAccess';
-import { NewProgramExternalId as NewRawProgramExternalId } from './direct/schema/ProgramExternalId';
+import type { NewProgramExternalId as NewRawProgramExternalId } from './direct/schema/ProgramExternalId';
 import { ProgramExternalId } from './entities/ProgramExternalId';
 
 // Leaving this around for now to document using the indexes for insert

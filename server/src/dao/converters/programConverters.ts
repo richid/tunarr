@@ -21,8 +21,8 @@ import {
   omitBy,
   uniqWith,
 } from 'lodash-es';
+import { isPromise } from 'node:util/types';
 import { DeepPartial, MarkRequired } from 'ts-essentials';
-import { isPromise } from 'util/types';
 import {
   isDefined,
   isNonEmptyString,
@@ -37,15 +37,15 @@ import {
   isOfflineItem,
   isRedirectItem,
 } from '../derived_types/Lineup.js';
-import {
+import type {
   ChannelWithRelations as RawChannel,
   ChannelWithPrograms as RawChannelWithPrograms,
   ProgramWithRelations as RawProgram,
-} from '../direct/derivedTypes.js';
-import { ProgramExternalId as RawProgramExternalId } from '../direct/schema/ProgramExternalId.js';
-import { Channel } from '../entities/Channel.js';
-import { Program, ProgramType } from '../entities/Program.js';
-import { ProgramExternalId } from '../entities/ProgramExternalId.js';
+} from '../direct/derivedTypes';
+import type { ProgramExternalId as RawProgramExternalId } from '../direct/schema/ProgramExternalId.js';
+import { type Channel } from '../entities/Channel.js';
+import type { Program, ProgramType } from '../entities/Program.js';
+import type { ProgramExternalId } from '../entities/ProgramExternalId.js';
 
 type ContentProgramConversionOptions = {
   skipPopulate: boolean | Partial<Record<'externalIds' | 'grouping', boolean>>;

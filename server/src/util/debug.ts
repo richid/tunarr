@@ -1,6 +1,6 @@
-import assert from 'assert';
 import { isFunction } from 'lodash-es';
-import { isDev } from '.';
+import assert from 'node:assert';
+import { isDev } from './index';
 
 export function devAssert(condition: boolean | (() => boolean)) {
   const res = isFunction(condition) ? condition() : condition;

@@ -13,7 +13,6 @@ import {
   SupportedVideoFormats,
 } from '@tunarr/types/schemas';
 import dayjs from 'dayjs';
-import fs from 'fs/promises';
 import {
   find,
   isArray,
@@ -30,7 +29,8 @@ import {
   parseInt,
   sortBy,
 } from 'lodash-es';
-import path, { dirname, join } from 'path';
+import fs from 'node:fs/promises';
+import path, { dirname, join } from 'node:path';
 import { MediaSourceApiFactory } from '../../external/MediaSourceApiFactory.js';
 import { globalOptions } from '../../globals.js';
 import { serverContext } from '../../serverContext.js';

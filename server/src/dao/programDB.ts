@@ -71,13 +71,13 @@ import {
   Program as RawProgram,
   programExternalIdString,
 } from './direct/schema/Program.js';
-import { NewProgramExternalId as NewRawProgramExternalId } from './direct/schema/ProgramExternalId.js';
-import { NewProgramGrouping } from './direct/schema/ProgramGrouping.js';
-import { NewProgramGroupingExternalId } from './direct/schema/ProgramGroupingExternalId.js';
-import { DB } from './direct/schema/db.js';
-import { Program, ProgramType } from './entities/Program';
-import { ProgramExternalId } from './entities/ProgramExternalId.js';
-import { ProgramGroupingType } from './entities/ProgramGrouping.js';
+import type { NewProgramExternalId as NewRawProgramExternalId } from './direct/schema/ProgramExternalId';
+import type { NewProgramGrouping } from './direct/schema/ProgramGrouping';
+import type { NewProgramGroupingExternalId } from './direct/schema/ProgramGroupingExternalId';
+import type { DB } from './direct/schema/db.js';
+import type { Program, ProgramType } from './entities/Program';
+import type { ProgramExternalId } from './entities/ProgramExternalId.js';
+import type { ProgramGroupingType } from './entities/ProgramGrouping.js';
 import { upsertRawProgramExternalIds } from './programExternalIdHelpers.js';
 
 type ValidatedContentProgram = MarkRequired<

@@ -26,8 +26,8 @@ import {
   programExternalIdTypeFromJellyfinProvider,
 } from '../custom_types/ProgramExternalIdType.js';
 import { ProgramSourceType } from '../custom_types/ProgramSourceType.js';
-import { NewProgram as NewRawProgram } from '../direct/schema/Program.js';
-import { NewProgramExternalId } from '../direct/schema/ProgramExternalId.js';
+import type { NewProgram as NewRawProgram } from '../direct/schema/Program';
+import type { NewProgramExternalId } from '../direct/schema/ProgramExternalId';
 import { Program, ProgramType } from '../entities/Program.js';
 import { ProgramExternalId } from '../entities/ProgramExternalId.js';
 

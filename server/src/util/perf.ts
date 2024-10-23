@@ -1,5 +1,5 @@
 import { isError, round } from 'lodash-es';
-import { attempt, attemptSync } from '.';
+import { attempt, attemptSync } from './index';
 import { LogLevels, Logger } from './logging/LoggerFactory';
 
 export function time<T>(f: () => T): [T, number] {

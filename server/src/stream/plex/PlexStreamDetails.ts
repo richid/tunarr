@@ -20,7 +20,7 @@ import {
 } from 'lodash-es';
 import { ProgramExternalIdType } from '../../dao/custom_types/ProgramExternalIdType';
 import { ContentBackedStreamLineupItem } from '../../dao/derived_types/StreamLineup.js';
-import { MediaSourceTable } from '../../dao/direct/schema/MediaSource';
+import type { MediaSourceTable } from '../../dao/direct/schema/MediaSource';
 import { ProgramDB } from '../../dao/programDB';
 import { SettingsDB, getSettings } from '../../dao/settings.js';
 import { isQueryError, isQuerySuccess } from '../../external/BaseApiClient.js';

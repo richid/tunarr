@@ -1,27 +1,27 @@
-import { CachedImageTable } from './CachedImage';
-import {
+import type { CachedImageTable } from './CachedImage';
+import type {
   ChannelCustomShowsTable,
   ChannelFallbackTable,
   ChannelFillerShowTable,
   ChannelProgramsTable,
   ChannelTable,
 } from './Channel';
-import { CustomShowContentTable, CustomShowTable } from './CustomShow';
-import { FillerShowContentTable, FillerShowTable } from './FillerShow';
-import { MediaSourceTable } from './MediaSource';
-import { ProgramTable } from './Program';
-import { ProgramExternalIdTable } from './ProgramExternalId';
-import { ProgramGroupingTable } from './ProgramGrouping';
-import { ProgramGroupingExternalIdTable } from './ProgramGroupingExternalId';
+import type { CustomShowContentTable, CustomShowTable } from './CustomShow';
+import type { FillerShowContentTable, FillerShowTable } from './FillerShow';
+import type { MediaSourceTable } from './MediaSource';
+import { type ProgramTable } from './Program';
+import type { ProgramExternalIdTable } from './ProgramExternalId';
+import type { ProgramGroupingTable } from './ProgramGrouping';
+import type { ProgramGroupingExternalIdTable } from './ProgramGroupingExternalId';
 
-export * from './CachedImage';
-export * from './Channel';
-export * from './FillerShow';
-export * from './MediaSource';
-export * from './Program';
-export * from './ProgramExternalId';
-export * from './ProgramGrouping';
-export * from './ProgramGroupingExternalId';
+export type * from './CachedImage';
+export type * from './Channel';
+export type * from './FillerShow';
+export type * from './MediaSource';
+export type * from './Program';
+export type * from './ProgramExternalId';
+export type * from './ProgramGrouping';
+export type * from './ProgramGroupingExternalId';
 
 export interface DB {
   cachedImage: CachedImageTable;

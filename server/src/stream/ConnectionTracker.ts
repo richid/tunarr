@@ -1,7 +1,7 @@
 import { StreamConnectionDetails } from '@tunarr/types/api';
 import dayjs from 'dayjs';
-import events from 'events';
 import { isEmpty, isUndefined, keys } from 'lodash-es';
+import events from 'node:events';
 import { TypedEventEmitter } from '../types/eventEmitter';
 import { Logger, LoggerFactory } from '../util/logging/LoggerFactory';
 

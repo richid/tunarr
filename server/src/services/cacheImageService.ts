@@ -1,9 +1,9 @@
 import axios, { AxiosHeaders, AxiosRequestConfig } from 'axios';
-import crypto from 'crypto';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { createWriteStream, promises as fs } from 'fs';
 import { isString, isUndefined } from 'lodash-es';
-import stream from 'stream';
+import crypto from 'node:crypto';
+import { createWriteStream, promises as fs } from 'node:fs';
+import stream from 'node:stream';
 // import { CachedImage, DbAccess } from '../dao/db.js';
 import { EntityRepository } from '@mikro-orm/core';
 import { getEm, withDb } from '../dao/dataSource.js';

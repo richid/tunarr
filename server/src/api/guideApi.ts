@@ -2,7 +2,7 @@ import { ChannelLineup } from '@tunarr/types';
 import { ChannelLineupSchema } from '@tunarr/types/schemas';
 import { map } from 'lodash-es';
 import { z } from 'zod';
-import { RouterPluginCallback } from '../types/serverType.js';
+import type { RouterPluginCallback } from '../types/serverType.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 
 export const guideRouter: RouterPluginCallback = (fastify, _opts, done) => {

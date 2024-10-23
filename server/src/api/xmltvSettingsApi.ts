@@ -7,7 +7,7 @@ import { defaultXmlTvSettings } from '../dao/settings.js';
 import { serverOptions } from '../globals.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
-import { RouterPluginCallback } from '../types/serverType.js';
+import type { RouterPluginCallback } from '../types/serverType.js';
 import { firstDefined } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 

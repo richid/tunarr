@@ -17,7 +17,7 @@ import ld, {
   values,
 } from 'lodash-es';
 import fs from 'node:fs/promises';
-import path from 'path';
+import path from 'node:path';
 import { v4 } from 'uuid';
 import { Maybe } from '../../types/util.js';
 import {

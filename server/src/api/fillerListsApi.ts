@@ -9,8 +9,8 @@ import {
 } from '@tunarr/types/schemas';
 import { isNil, map } from 'lodash-es';
 import { z } from 'zod';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { FillerShowId } from '../dao/entities/FillerShow.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 
 // We can't use the built-in zod brand because we have our own custom
 // tagged type.

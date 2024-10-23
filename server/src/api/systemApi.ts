@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { serverOptions } from '../globals.js';
 import { scheduleBackupJobs } from '../services/scheduler.js';
 import { FixersByName } from '../tasks/fixers/index.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { getDefaultLogLevel } from '../util/defaults.js';
 import { ifDefined } from '../util/index.js';
 import { getEnvironmentLogLevel } from '../util/logging/LoggerFactory.js';

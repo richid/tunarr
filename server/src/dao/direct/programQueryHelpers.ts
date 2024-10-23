@@ -9,10 +9,10 @@ import { isBoolean, isEmpty, keys, merge, reduce } from 'lodash-es';
 import { DeepPartial, DeepRequired, StrictExclude } from 'ts-essentials';
 import { ProgramType } from '../entities/Program';
 import { directDbAccess } from './directDbAccess.js';
-import { FillerShowTable as RawFillerShow } from './schema/FillerShow';
-import { ProgramTable as RawProgram } from './schema/Program';
-import { ProgramGroupingTable as RawProgramGrouping } from './schema/ProgramGrouping';
-import { DB } from './types.gen';
+import type { FillerShowTable as RawFillerShow } from './schema/FillerShow';
+import type { ProgramTable as RawProgram } from './schema/Program';
+import type { ProgramGroupingTable as RawProgramGrouping } from './schema/ProgramGrouping';
+import type { DB } from './types.gen';
 
 type ProgramGroupingFields<Alias extends string = 'programGrouping'> =
   readonly `${Alias}.${keyof RawProgramGrouping}`[];

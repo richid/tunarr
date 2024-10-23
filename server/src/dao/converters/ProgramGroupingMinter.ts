@@ -6,10 +6,10 @@ import { find } from 'lodash-es';
 import { P, match } from 'ts-pattern';
 import { v4 } from 'uuid';
 import { isNonEmptyString } from '../../util';
-import { ProgramExternalIdType } from '../custom_types/ProgramExternalIdType';
-import { NewProgramGrouping } from '../direct/schema/ProgramGrouping';
-import { NewProgramGroupingExternalId } from '../direct/schema/ProgramGroupingExternalId';
-import { ProgramGroupingType } from '../entities/ProgramGrouping';
+import type { ProgramExternalIdType } from '../custom_types/ProgramExternalIdType';
+import type { NewProgramGrouping } from '../direct/schema/ProgramGrouping';
+import type { NewProgramGroupingExternalId } from '../direct/schema/ProgramGroupingExternalId';
+import type { ProgramGroupingType } from '../entities/ProgramGrouping';
 
 type MintedProgramGrouping = {
   grouping: NewProgramGrouping;

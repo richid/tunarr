@@ -1,8 +1,8 @@
 import { Watermark } from '@tunarr/types';
 import dayjs from 'dayjs';
-import events from 'events';
 import { isUndefined } from 'lodash-es';
-import { PassThrough } from 'stream';
+import events from 'node:events';
+import { PassThrough } from 'node:stream';
 import { SettingsDB, getSettings } from '../dao/settings.js';
 import { FfmpegTranscodeSession } from '../ffmpeg/FfmpegTrancodeSession.js';
 import { OutputFormat } from '../ffmpeg/OutputFormat.js';

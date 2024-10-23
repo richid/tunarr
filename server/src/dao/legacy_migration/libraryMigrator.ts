@@ -1,6 +1,6 @@
-import fs from 'fs/promises';
 import ld, { isNil, maxBy, partition, reduce } from 'lodash-es';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import {
   groupByUniqProp,
   isNonEmptyString,

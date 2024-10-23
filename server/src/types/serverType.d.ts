@@ -8,9 +8,9 @@ import {
 } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { FastifyRequest } from 'fastify/types/request';
-import { FastifySchema } from 'fastify/types/schema';
 import { ResolveFastifyRequestType } from 'fastify/types/type-provider';
-import { IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { FastifySchema } from 'npm:fastify/types/schema';
 import { z } from 'zod';
 
 export type ServerType = FastifyInstance<

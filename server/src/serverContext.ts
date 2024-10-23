@@ -1,6 +1,6 @@
-import { AsyncLocalStorage } from 'async_hooks';
 import { isUndefined, once } from 'lodash-es';
-import path from 'path';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import path from 'node:path';
 import { XmlTvWriter } from './XmlTvWriter.js';
 import { ChannelDB } from './dao/channelDb.js';
 import { ProgramConverter } from './dao/converters/programConverters.js';

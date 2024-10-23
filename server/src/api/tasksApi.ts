@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import ld, { isEmpty, isNil } from 'lodash-es';
 import { z } from 'zod';
 import { GlobalScheduler } from '../services/scheduler.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await

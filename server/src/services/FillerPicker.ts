@@ -1,10 +1,10 @@
 import constants from '@tunarr/shared/constants';
 import { isEmpty, isNil, isUndefined } from 'lodash-es';
-import {
+import type {
   ChannelFillerShowWithContent,
   ProgramWithRelations,
 } from '../dao/direct/derivedTypes';
-import { Channel } from '../dao/direct/schema/Channel';
+import type { Channel } from '../dao/direct/schema/Channel';
 import { ChannelCache } from '../stream/ChannelCache';
 import { Maybe, Nullable } from '../types/util';
 import { random } from '../util/random';

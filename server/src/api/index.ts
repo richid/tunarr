@@ -1,16 +1,16 @@
 import { VersionApiResponseSchema } from '@tunarr/types/api';
-import { createWriteStream, promises as fsPromises } from 'fs';
 import { isError, isNil } from 'lodash-es';
-import path from 'path';
-import { pipeline } from 'stream/promises';
+import { createWriteStream, promises as fsPromises } from 'node:fs';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { z } from 'zod';
-import { MediaSourceType } from '../dao/entities/MediaSource.js';
+import { MediaSourceType } from '../dao/entities/MediaSource';
 import { MediaSourceApiFactory } from '../external/MediaSourceApiFactory.js';
 import { FFMPEGInfo } from '../ffmpeg/ffmpegInfo.js';
 import { serverOptions } from '../globals.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { fileExists } from '../util/fsUtil.js';
 import {
   isEdgeBuild,

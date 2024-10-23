@@ -14,7 +14,7 @@ import { JellyfinApiClient } from '../external/jellyfin/JellyfinApiClient.js';
 import { PlexApiClient } from '../external/plex/PlexApiClient.js';
 import { GlobalScheduler } from '../services/scheduler.js';
 import { UpdateXmlTvTask } from '../tasks/UpdateXmlTvTask.js';
-import { RouterPluginAsyncCallback } from '../types/serverType.js';
+import type { RouterPluginAsyncCallback } from '../types/serverType.js';
 import { firstDefined, wait } from '../util/index.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 

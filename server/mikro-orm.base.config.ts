@@ -3,8 +3,8 @@ import {
   defineConfig,
 } from '@mikro-orm/better-sqlite';
 import { Migrator } from '@mikro-orm/migrations';
+import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import path, { dirname } from 'path';
 import { CachedImage } from './src/dao/entities/CachedImage.js';
 import { Channel } from './src/dao/entities/Channel.js';
 import { ChannelFillerShow } from './src/dao/entities/ChannelFillerShow.js';

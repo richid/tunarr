@@ -32,7 +32,7 @@ import { XmlTvWriter } from '../XmlTvWriter.js';
 import { ChannelDB } from '../dao/channelDb.js';
 import { ProgramConverter } from '../dao/converters/programConverters.js';
 import { Lineup } from '../dao/derived_types/Lineup.js';
-import {
+import type {
   ChannelWithPrograms,
   ChannelWithPrograms as RawChannel,
 } from '../dao/direct/derivedTypes.js';

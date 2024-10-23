@@ -6,7 +6,7 @@ import {
   SqliteDialect,
 } from 'kysely';
 import { once } from 'lodash-es';
-import path from 'path';
+import path from 'node:path';
 import { GlobalOptions } from '../../globals';
 import { LoggerFactory } from '../../util/logging/LoggerFactory';
 import { DB } from './schema/db';

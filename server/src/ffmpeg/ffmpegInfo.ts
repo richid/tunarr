@@ -1,7 +1,7 @@
 import { FfmpegSettings } from '@tunarr/types';
-import { exec } from 'child_process';
 import _, { isEmpty, isError, nth, some, trim } from 'lodash-es';
 import NodeCache from 'node-cache';
+import { exec } from 'node:child_process';
 import PQueue from 'p-queue';
 import { Nullable } from '../types/util.js';
 import { cacheGetOrSet } from '../util/cache.js';

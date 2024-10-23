@@ -1,8 +1,8 @@
 import { TunarrEvent } from '@tunarr/types';
-import EventEmitter from 'events';
 import { FastifyInstance } from 'fastify';
 import { isString } from 'lodash-es';
-import { Readable } from 'stream';
+import EventEmitter from 'node:events';
+import { Readable } from 'node:stream';
 import { TypedEventEmitter } from '../types/eventEmitter.js';
 import { LoggerFactory } from '../util/logging/LoggerFactory.js';
 
